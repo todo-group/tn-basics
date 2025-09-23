@@ -16,7 +16,6 @@ def main():
     image = Image.open(path).convert("L")
     array = np.asarray(image, dtype=np.float64)
     h, w = array.shape
-
     print(f"image size; {h} {w}\n")
     plt.figure()
     plt.imshow(array, cmap="gray", vmin=0, vmax=255)
@@ -26,7 +25,6 @@ def main():
 
     """SVD"""
     U, S, Vt = np.linalg.svd(array, full_matrices=False)
-
     plt.figure()
     plt.semilogy(S)
     plt.title("singular values")
@@ -41,7 +39,6 @@ def main():
         Sr = np.diag(S[:r])
         Vtr = Vt[:r, :]
         Ar = Ur @ Sr @ Vtr
-
         plt.figure()
         plt.imshow(Ar, cmap="gray", vmin=0, vmax=255)
         plt.title(f"reconstructed image (rank {r})")

@@ -1,0 +1,16 @@
+[package]
+name = "tn-basics"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ndarray = "0.15"
+ndarray-linalg = { version = "0.16", features = ["openblas-system"] }
+image = "0.25"
+plotters = "0.3"
+
+[[bin]]
+name = "1_svd"
+
+[[bin]]
+name = "2_image-compression"

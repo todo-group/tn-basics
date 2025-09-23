@@ -13,7 +13,6 @@ def main():
 
     """(thin) SVD"""
     U, S, Vt = np.linalg.svd(A, full_matrices=False)
-
     print(f"U =\n{U}\n")
     print(f"S =\n{S}\n")
     print(f"Vt =\n{Vt}\n")
@@ -21,21 +20,18 @@ def main():
     """reconstruct A"""
     S_matrix = np.diag(S)
     A_reconstructed = U @ S_matrix @ Vt
-
     print(f"Reconstructed A =\n{A_reconstructed}\n")
 
     """full SVD"""
     U, S, Vt = np.linalg.svd(A, full_matrices=True)
-
     print(f"U (full) =\n{U}\n")
     print(f"S (full) =\n{S}\n")
     print(f"Vt (full) =\n{Vt}\n")
 
-    """reconstruct A"""
+    """reconstruct A (full SVD)"""
     S_matrix = np.zeros((4, 3))
     np.fill_diagonal(S_matrix, S)
     A_reconstructed = U @ S_matrix @ Vt
-
     print(f"Reconstructed A =\n{A_reconstructed}\n")
 
     """rank-2 approximation"""
