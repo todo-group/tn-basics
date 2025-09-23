@@ -20,7 +20,7 @@ def main():
     """reconstruct A"""
     S_matrix = np.diag(S)
     A_reconstructed = U @ S_matrix @ Vt
-    print(f"Reconstructed A =\n{A_reconstructed}\n")
+    print(f"reconstructed A =\n{A_reconstructed}\n")
 
     """full SVD"""
     U, S, Vt = np.linalg.svd(A, full_matrices=True)
@@ -32,7 +32,7 @@ def main():
     S_matrix = np.zeros((4, 3))
     np.fill_diagonal(S_matrix, S)
     A_reconstructed = U @ S_matrix @ Vt
-    print(f"Reconstructed A =\n{A_reconstructed}\n")
+    print(f"reconstructed A =\n{A_reconstructed}\n")
 
     """rank-2 approximation"""
     r = 2
@@ -41,7 +41,7 @@ def main():
     Vtr = Vt[:r, :]
     A_rank2 = Ur @ Sr @ Vtr
 
-    print(f"Rank-2 approximation of A =\n{A_rank2}\n")
+    print(f"rank-2 approximation of A =\n{A_rank2}\n")
     print(f"Frobenius norm of the error = {np.linalg.norm(A - A_rank2, 'fro')}\n")
 
 

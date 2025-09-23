@@ -19,9 +19,9 @@
   - 行列の低ランク近似
   - 行列の低ランク近似の例
   - Eckart-Youngの定理
-  - HOL: 行列の特異値分解
+  - HOL: 行列の特異値分解 (1_svd)
   - 画像データの圧縮
-  - HOL: 二次元画像の低ランク近似
+  - HOL: 二次元画像の低ランク近似 (2_image-compression)
     - data/sqai-square-gray-rgb150ppi.jpg
 
 - テンソルとテンソルネットワーク
@@ -29,8 +29,8 @@
   - テンソルのデータ量
   - テンソルの縮約
   - テンソル縮約の計算量
-  - HOL: テンソルの定義
-  - HOL: テンソルの縮約
+  - HOL: テンソルの定義 (3_tensor)
+  - HOL: テンソルの縮約 (4_contraction)
 
 ## 第2部　テンソルネットワークの利用 (75分)
 
@@ -38,21 +38,21 @@
   - MPS (Matrix Product State)
   - ベル状態
   - GHZ状態
-  - HOL: MPSから状態ベクトルへの変換
-  - HOL: 状態ベクトルからMPSへの変換
+  - HOL: MPSから状態ベクトルへの変換 (5_mps2statevector)
+  - HOL: 状態ベクトルからMPSへの変換 (6_statevector2mps)
 
 - 量子状態のユニタリ時間発展
   - 量子回路のテンソルネットワーク表現
   - 初期状態
   - 1-qubitゲートと2-qubitゲート
   - TEBD
-  - HOL: TEBD
-  - OPT: canonical form
+  - HOL: TEBD (7_tebd)
+  - OPT: カノニカル形式 (8_canonical-form)
 - 階層構造の圧縮表現
   - QTT (Quantics Tensor Train)表現 [3]
   - QTT表現の例: 指数関数、三角関数 [2]
-  - HOL: 一次元関数のQTT表現
+  - HOL: 一次元関数のQTT表現 (9_function2qtt)
     - 指数関数、三角関数、正規分布関数
   - QTTの微分 [2]
-  - HOL: 差分演算子のMPO表現
-  - OPT: フーリエ変換
+  - HOL: 差分演算子のMPO表現 (10_finite-difference)
+  - OPT: フーリエ変換 (11_fourier-transform)
