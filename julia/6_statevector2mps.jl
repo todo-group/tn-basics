@@ -23,8 +23,8 @@ function main()
     # Bell state
     println("Bell state:")
     v = [1.0, 0.0, 0.0, 1.0] ./ sqrt(2)
-    V = reshape(v, 2, 2)             # (2,2)
-    F = svd(V; full=false)           # V = U * Diagonal(S) * V'
+    X = reshape(v, 2, 2)             # (2,2)
+    F = svd(X; full=false)           # X = U * Diagonal(S) * V'
     println("singular values: ", F.S)
     U, vR, r = truncate_svd(F.U, F.S, F.Vt'; cutoff)
     println("tensors ", Any[U, vR], ")\n")
@@ -36,15 +36,16 @@ function main()
     v[1] = 1 / sqrt(2)           # Julia 1-based
     v[end] = 1 / sqrt(2)
 
-    mps = Any[]
+    mps = Array{Float64}[]
     rank = 1
+    # FIXME: 型安定性を向上
     V = copy(v)
 
     for i in 0:(n-2)
         V = reshape(V, rank * 2, :)    # (rank*2, -1)
         F = svd(V; full=false)
         println("$(i): singular values: ", F.S)
-        U2, vR, rank_new = truncate_svd(F.U, F.S, F.Vt'; cutoff)
+        U2::Array{Float64}, vR, rank_new = truncate_svd(F.U, F.S, F.Vt'; cutoff)
         if i > 0
             U2 = reshape(U2, rank, 2, rank_new)
         end
