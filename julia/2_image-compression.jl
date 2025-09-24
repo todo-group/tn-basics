@@ -10,6 +10,7 @@ using Plots
 function main()
     path = "../data/sqai-square-gray-rgb150ppi.jpg"  # 入力画像パス
 
+    # FIXME: 型安定性を向上
     # 画像を読み込み → グレイスケール化 → 行列（Float64）へ
     img = load(path)
     gimg = Gray.(img)  # RGBでもGrayに
