@@ -13,8 +13,11 @@ function main()
     # 画像を読み込み → グレイスケール化 → 行列（Float64）へ
     img = load(path)
     gimg = Gray.(img)  # RGBでもGrayに
-    # channelview(gimg): 1×H×W、これを H×W に
-    A01 = Array{Float64}(permutedims(channelview(gimg), (2, 3, 1))[:, :, 1])
+    # FIXME: 最初から2次元になっている? (Images v0.26)
+    #
+    # # channelview(gimg): 1×H×W、これを H×W に
+    # # A01 = Array{Float64}(permutedims(channelview(gimg), (2, 3, 1))[:, :, 1])
+    A01 = channelview(gimg)
     # Python版は 0..255 の画素値: 0..1 の場合はスケールを合わせる
     A = maximum(A01) <= 1.0 ? A01 .* 255.0 : A01
 
