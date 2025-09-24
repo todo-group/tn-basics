@@ -34,7 +34,7 @@ function main()
 
     # reconstruct A (full SVD)
     S_matrix_full = zeros(eltype(Sfull), size(A)...)
-    for i in 1:length(Sfull)
+    for i in eachindex(Sfull)
         S_matrix_full[i, i] = Sfull[i]
     end
     A_reconstructed_full = Ufull * S_matrix_full * transpose(Vfull)
