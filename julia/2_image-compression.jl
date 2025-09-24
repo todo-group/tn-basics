@@ -36,7 +36,7 @@ function main()
     ranks = [1, 2, 4, 8, 16, 32, 64, 128, 256]
     for r in ranks
         rr = min(r, length(S))
-        Ar = @view U[:, 1:rr] * Diagonal(S[1:rr]) * transpose(@view V[:, 1:rr])
+        Ar = @view(U[:, 1:rr]) * Diagonal(S[1:rr]) * transpose(@view(V[:, 1:rr]))
 
         heatmap(Ar; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
             axis=nothing, title="reconstructed image (rank $(rr))")
