@@ -21,3 +21,15 @@ name = "2_image-compression"
 
 [[bin]]
 name = "3_tensor"
+
+[[bin]]
+name = "4_contraction"
+
+[[bin]]
+name = "5_mps2statevector"
+
+[[bin]]
+name = "6_statevector2mps"
+
+[[bin]]
+name = "9_function2qtt"
