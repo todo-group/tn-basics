@@ -27,7 +27,7 @@ function main()
 
     # QTT decomposition
     yt = copy(y)
-    qtt = Any[]
+    qtt = Array{Float64}[]
     rank = 1
     for k in 0:(depth-2)
         println("depth: $k")
@@ -61,7 +61,7 @@ function main()
     end
 
     # reconstruction
-    yr = qtt[1]               # (2, r1) もしくは (rank0,2,r1) だが最初は (2, r1)
+    yr = qtt[1]::Matrix{Float64}    # (2, r1) もしくは (rank0,2,r1) だが最初は (2, r1)
     for k in 2:(depth-1)
         @tensor tmp[i, k, l] := yr[i, j] * qtt[k][j, k, l]   # (i k l)
         yr = reshape(tmp, size(tmp, 1) * size(tmp, 2), size(tmp, 3))
