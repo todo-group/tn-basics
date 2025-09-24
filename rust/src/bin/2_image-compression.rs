@@ -16,7 +16,7 @@ fn to_ndarray_gray_u8(img: &DynamicImage) -> Array2<u8> {
     arr
 }
 
-fn save_gray_u8(path: &str, a: &Array2<f64>) -> Result<(), Box<dyn std::error::Error>> {
+fn save_gray_u8(path: &str, a: &Array2<f64>) -> anyhow::Result<()> {
     // 0..255 にクリップして u8 に落とす
     let h = a.nrows();
     let w = a.ncols();
@@ -31,20 +31,23 @@ fn save_gray_u8(path: &str, a: &Array2<f64>) -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
-fn plot_singular_values(path: &str, s: &Array1<f64>) -> Result<(), Box<dyn std::error::Error>> {
+fn plot_singular_values(path: &str, s: &Array1<f64>) -> anyhow::Result<()> {
     let root = BitMapBackend::new(path, (800, 500)).into_drawing_area();
     root.fill(&WHITE)?;
     let max_y = s.iter().cloned().fold(f64::MIN, f64::max).max(1e-12);
+
+    let min_y = s.iter().cloned().fold(f64::MAX, f64::min).min(1e10);
+
     let mut chart = ChartBuilder::on(&root)
         .caption("singular values", ("sans-serif", 24))
         .margin(20)
         .x_label_area_size(40)
         .y_label_area_size(60)
-        .build_cartesian_2d(0..(s.len() - 1), (1e-12f64..max_y).log_scale())?;
+        .build_cartesian_2d(0..(s.len() - 1), (min_y..max_y).log_scale())?;
 
-    chart.configure_mesh()
+    chart.configure_mesh().disable_mesh()
         .x_desc("index")
-        .y_desc("λ_i (log)")
+        .y_desc("λ_i")
         .draw()?;
 
     chart.draw_series(LineSeries::new(
@@ -54,7 +57,7 @@ fn plot_singular_values(path: &str, s: &Array1<f64>) -> Result<(), Box<dyn std::
     Ok(())
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
     let path = "../data/sqai-square-gray-rgb150ppi.jpg";
 
     // 画像読み込み
@@ -70,24 +73,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     save_gray_u8("original.png", &a)?;
 
     // SVD（thin）
-    // full_u=false, full_vt=true → U: h×min(h,w), S: min, Vt: min×w
     let (u, s, vt) = a.thin_svd(true, true)?;
-    let u = u.ok_or("U not returned")?;
-    let vt = vt.ok_or("Vt not returned")?;
+    let u = u.unwrap();
+    let vt = vt.unwrap();
 
     // 特異値プロット（対数軸）
     plot_singular_values("singular_values.png", &s)?;
 
     // ランクごとの再構成
-    let ranks = [1usize, 2, 4, 8, 16, 32, 64, 128, 256];
+    let ranks: [usize; _] = [1, 2, 4, 8, 16, 32, 64, 128, 256];
     for &r in &ranks {
-        let rr = r.min(s.len());
-        let ur = u.slice(s![.., 0..rr]).to_owned();
-        let sr = Array2::from_diag(&s.slice(s![0..rr]).to_owned());
-        let vr = vt.slice(s![0..rr, ..]).to_owned();
-        let ar = ur.dot(&sr).dot(&vr);
+        let r = r.min(s.len());
+        let ur = u.slice(s![.., 0..r]).to_owned();
+        let sr = Array2::from_diag(&s.slice(s![0..r]).to_owned());
+        let vtr = vt.slice(s![0..r, ..]).to_owned();
+        let ar = ur.dot(&sr).dot(&vtr);
 
-        let out = format!("reconstructed_rank_{}.png", rr);
+        let out = format!("reconstructed_rank_{}.png", r);
         save_gray_u8(&out, &ar)?;
         println!("saved {}", out);
     }

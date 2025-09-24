@@ -12,6 +12,7 @@ ndarray-einsum = "0.8"
 image = "0.25"
 plotters = "0.3"
 rand = "0.8"
+anyhow = "1.0.100"
 
 [[bin]]
 name = "1_svd"
