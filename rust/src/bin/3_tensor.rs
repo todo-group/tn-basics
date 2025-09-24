@@ -27,4 +27,3 @@ fn main() {
     println!("A[1,1,1] = {}", a[(1,1,1)]);
     println!("A[:,0,1] = {:?}", a.slice(s![.., 0, 1]));
 }
-// cargo run --bin 3_tensor
