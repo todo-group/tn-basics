@@ -8,9 +8,9 @@ using Printf
 
 function main()
     A = [1 2 3;
-         6 4 5;
-         8 9 7;
-         10 11 12]
+        6 4 5;
+        8 9 7;
+        10 11 12]
     println("A =\n", A, "\n")
 
     # (thin) SVD
@@ -42,9 +42,9 @@ function main()
 
     # rank-2 approximation
     r = 2
-    Ur  = Ufull[:, 1:r]
-    Sr  = Diagonal(Sfull[1:r])
-    Vr  = Vfull[:, 1:r]
+    Ur = Ufull[:, 1:r]
+    Sr = Diagonal(Sfull[1:r])
+    Vr = Vfull[:, 1:r]
     A_rank2 = Ur * Sr * transpose(Vr)
     println("Rank-2 approximation of A =\n", A_rank2, "\n")
 

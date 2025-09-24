@@ -14,7 +14,7 @@ function main()
     println("A: shape ", size(A), "\n", A, "\n")
     println("B: shape ", size(B), "\n", B, "\n")
     println("contract: A, B -> C")
-    @tensor C[i,k] := A[i,j] * B[j,k]
+    @tensor C[i, k] := A[i, j] * B[j, k]
     println("C: shape ", size(C), "\n", C, "\n")
 
     println("more complex contraction")
@@ -25,7 +25,7 @@ function main()
     println("B: shape ", size(B))
     println("C: shape ", size(C))
     println("contract: A, B, C -> D")
-    @tensor D[i,j,k] := A[i,j,l,m] * B[l,n] * C[m,n,k]
+    @tensor D[i, j, k] := A[i, j, l, m] * B[l, n] * C[m, n, k]
     println("D: shape ", size(D), "\n", D, "\n")
 end
 

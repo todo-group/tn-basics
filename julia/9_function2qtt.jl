@@ -8,9 +8,9 @@ using TensorOperations
 using Plots
 
 function main()
-    depth   = 8
+    depth = 8
     npoints = 2^depth
-    cutoff  = 1e-10
+    cutoff = 1e-10
     max_rank = 4
 
     # target function
@@ -25,12 +25,12 @@ function main()
     end
 
     # QTT decomposition
-    yt   = copy(y)
-    qtt  = Any[]
+    yt = copy(y)
+    qtt = Any[]
     rank = 1
     for k in 0:(depth-2)
         println("depth: $k")
-        yt_mat = reshape(yt, rank*2, :)
+        yt_mat = reshape(yt, rank * 2, :)
         F = svd(yt_mat; full=false)
         S = F.S
         println("singular values: ", S)
@@ -62,10 +62,10 @@ function main()
     # reconstruction
     yr = qtt[1]               # (2, r1) もしくは (rank0,2,r1) だが最初は (2, r1)
     for k in 2:(depth-1)
-        @tensor tmp[i,k,l] := yr[i,j] * qtt[k][j,k,l]   # (i k l)
-        yr = reshape(tmp, size(tmp,1)*size(tmp,2), size(tmp,3))
+        @tensor tmp[i, k, l] := yr[i, j] * qtt[k][j, k, l]   # (i k l)
+        yr = reshape(tmp, size(tmp, 1) * size(tmp, 2), size(tmp, 3))
     end
-    @tensor yr2[i,k] := yr[i,j] * qtt[end][j,k]
+    @tensor yr2[i, k] := yr[i, j] * qtt[end][j, k]
     # Python の reshape(-1) 相当（row-major）に合わせたい場合は行を入替後 vec
     state = vec(permutedims(yr2))  # flatten in row-major order
 

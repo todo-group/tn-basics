@@ -25,9 +25,9 @@ function main()
     A = reshape([1, 2, 3, 4, 5, 6, 7, 8], 2, 2, 2)
     println("A =\n", A, "\n")
     println("A.shape = ", size(A))
-    println("A[1,1,1] = ", A[1,1,1])
-    println("A[2,2,2] = ", A[2,2,2])
-    println("A[:,1,2] = ", A[:,1,2], "\n")
+    println("A[1,1,1] = ", A[1, 1, 1])
+    println("A[2,2,2] = ", A[2, 2, 2])
+    println("A[:,1,2] = ", A[:, 1, 2], "\n")
 end
 
 main()
