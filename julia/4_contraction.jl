@@ -7,7 +7,7 @@ Tensor contraction examples (Julia)
 using Random
 using TensorOperations
 
-function main()
+function main1()
     println("matrix-matrix multiplication")
     A = rand(2, 3)
     B = rand(3, 4)
@@ -16,7 +16,9 @@ function main()
     println("contract: A, B -> C")
     @tensor C[i, k] := A[i, j] * B[j, k]
     println("C: shape ", size(C), "\n", C, "\n")
+end
 
+function main2()
     println("more complex contraction")
     A = rand(2, 3, 4, 5)   # i j l m
     B = rand(4, 3)         # l n
@@ -29,4 +31,6 @@ function main()
     println("D: shape ", size(D), "\n", D, "\n")
 end
 
-main()
+
+main1()
+main2()
