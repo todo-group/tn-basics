@@ -12,7 +12,7 @@ function truncate_svd(U::AbstractMatrix, S::AbstractVector, V::AbstractMatrix; c
     r = sum(S .> cutoff * S[1])
     U2 = @view U[:, 1:r]
     S2 = @view S[1:r]
-    Vt2 = @view V[:, 1:r]'           # V' が Vt
+    Vt2 = @view(V[:, 1:r])'           # V' が Vt
     v = Diagonal(S2) * Vt2         # Python: np.dot(np.diag(S), Vt)
     return U2, v, r
 end
