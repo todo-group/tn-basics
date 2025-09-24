@@ -1,11 +1,13 @@
 [package]
 name = "tn-basics"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-ndarray = "0.15"
-ndarray-linalg = { version = "0.16", features = ["openblas-system"] }
+ndarray = { version = "0.16.0", features = ["blas"] }
+blas-src = { version = "0.10", features = ["openblas"] }
+openblas-src = { version = "0.10", features = ["cblas", "system"] }
+ndarray-linalg = { version = "0.17", features = ["openblas-system"] }
 ndarray-einsum = "0.8"
 image = "0.25"
 plotters = "0.3"

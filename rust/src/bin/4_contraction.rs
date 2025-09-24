@@ -1,10 +1,10 @@
 use ndarray::Array;
-use ndarray_einsum_beta::einsum;
+use ndarray_einsum::einsum;
 use rand::random;
 
-fn main() {
-    let mut rng = rand::thread_rng();
+extern crate blas_src;
 
+fn main() {
     println!("matrix-matrix multiplication");
     let a = Array::from_shape_fn((2, 3), |_| random::<f64>());
     let b = Array::from_shape_fn((3, 4), |_| random::<f64>());

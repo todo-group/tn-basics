@@ -1,6 +1,8 @@
 use ndarray::{array, Array1, Array2, Array3, s};
 use rand::random;
 
+extern crate blas_src;
+
 fn main() {
     println!("vector (1-leg tensor)");
     let t1: Array1<i32> = array![1, 2, 3];

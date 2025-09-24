@@ -1,8 +1,9 @@
 use ndarray::prelude::*;
-use ndarray_linalg::svd::*;
-use ndarray_linalg::Norm;
-use image::{io::Reader as ImageReader, DynamicImage, GenericImageView, ImageBuffer, Luma};
+use image::{ImageReader, DynamicImage, GenericImageView, ImageBuffer, Luma};
 use plotters::prelude::*;
+use tn_basics::ThinSVD;
+
+extern crate blas_src;
 
 fn to_ndarray_gray_u8(img: &DynamicImage) -> Array2<u8> {
     // グレイスケール化（Luma8）
@@ -70,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // SVD（thin）
     // full_u=false, full_vt=true → U: h×min(h,w), S: min, Vt: min×w
-    let (u, s, vt) = a.svd(false, true)?;
+    let (u, s, vt) = a.thin_svd(true, true)?;
     let u = u.ok_or("U not returned")?;
     let vt = vt.ok_or("Vt not returned")?;
 

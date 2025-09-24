@@ -1,6 +1,9 @@
 use ndarray::prelude::*;
 use ndarray_linalg::svd::*;
 use ndarray_linalg::OperationNorm;
+use tn_basics::ThinSVD;
+
+extern crate blas_src;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let a: Array2<f64> = array![
@@ -12,7 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("A =\n{:?}\n", a);
 
     // (thin) SVD
-    let (u, s, vt) = a.svd(false, false)?;
+    let (u, s, vt) = a.thin_svd(true, true)?;
     let u = u.unwrap();
     let vt = vt.unwrap();
     println!("U =\n{:?}\n", u);
