@@ -6,11 +6,16 @@ edition = "2021"
 [dependencies]
 ndarray = "0.15"
 ndarray-linalg = { version = "0.16", features = ["openblas-system"] }
+ndarray-einsum = "0.8"
 image = "0.25"
 plotters = "0.3"
+rand = "0.8"
 
 [[bin]]
 name = "1_svd"
 
 [[bin]]
 name = "2_image-compression"
+
+[[bin]]
+name = "3_tensor"

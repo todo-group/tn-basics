@@ -16,8 +16,8 @@ def main():
     print(f"t1[0] = {t1[0]}")
     print(f"t1[1] = {t1[1]}\n")
 
-    print("matrix (2-leg tensor)")
-    t2 = np.array([[1, 2, 3], [4, 5, 6]])
+    print("(random) matrix (2-leg tensor)")
+    t2 = np.random.rand(2, 3)
     print(f"t2 =\n{t2}")
     print(f"t2.shape = {t2.shape}")
     print(f"t2[0,0] = {t2[0, 0]}")
