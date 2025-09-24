@@ -12,12 +12,12 @@ def main():
     print("Bell state:")
     tl = np.array([[1, 0], [0, 1]]) / np.pow(2, 0.25)
     tr = np.array([[1, 0], [0, 1]]) / np.pow(2, 0.25)
-    print(f"left tensor: {tl}")
-    print(f"right tensor: {tr}\n")
+    print(f"left tensor:\n{tl}")
+    print(f"right tensor:\n{tr}\n")
 
     bell = np.einsum("ij,jk->ik", tl, tr)
     bell = bell.reshape(-1)
-    print(f"statevector: {bell}\n")
+    print(f"statevector:\n{bell}\n")
 
     # GHZ state
     n = 6
@@ -28,9 +28,9 @@ def main():
     t = np.zeros((2, 2, 2))
     t[0, 0, 0] = 1 / w
     t[1, 1, 1] = 1 / w
-    print(f"left tensor: {tl}")
-    print(f"right tensor: {tr}")
-    print(f"middle tensors: {t}\n")
+    print(f"left tensor:\n{tl}")
+    print(f"right tensor:\n{tr}")
+    print(f"middle tensors:\n{t}\n")
 
     ghz = tl
     for k in range(1, n - 1):
@@ -38,7 +38,7 @@ def main():
         ghz = ghz.reshape(ghz.shape[0] * ghz.shape[1], ghz.shape[2])
     ghz = np.einsum("ij,jk->ik", ghz, tr)
     ghz = ghz.reshape(-1)
-    print(f"statevector: {ghz}\n")
+    print(f"statevector:\n{ghz}\n")
 
 
 if __name__ == "__main__":

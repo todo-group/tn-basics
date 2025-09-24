@@ -38,3 +38,15 @@ where
         Ok((u_thin, s, vt_thin))
     }
 }
+
+pub trait MapStrToAnyhowErr{
+    type Ok;
+    fn map_str_err(self) -> Result<Self::Ok, anyhow::Error>;
+}
+
+impl<T> MapStrToAnyhowErr for Result<T, &'static str> {
+    type Ok = T;
+    fn map_str_err(self) -> Result<<Self as MapStrToAnyhowErr>::Ok, anyhow::Error> {
+        self.map_err(|e| anyhow::anyhow!(e))
+    }
+}
