@@ -26,8 +26,10 @@ function main()
     println("image size; $h $w\n")
 
     # 元画像の表示
-    heatmap(A; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
+    plt = heatmap(A; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
         axis=nothing, title="original image")
+    display(plt)
+    readline()
 
     # SVD (thin)
     F = svd(A; full=false)   # U: H×min(H,W), S: Vector, V: W×W
@@ -42,8 +44,10 @@ function main()
         rr = min(r, length(S))
         Ar = @view(U[:, 1:rr]) * Diagonal(S[1:rr]) * transpose(@view(V[:, 1:rr]))
 
-        heatmap(Ar; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
+        plt = heatmap(Ar; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
             axis=nothing, title="reconstructed image (rank $(rr))")
+        display(plt)
+        readline()
     end
 end
 
