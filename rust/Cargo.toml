@@ -13,6 +13,7 @@ image = "0.25"
 plotters = "0.3"
 rand = "0.8"
 anyhow = "1.0.100"
+num-complex = "0.4"
 
 [[bin]]
 name = "1_svd"
@@ -33,4 +34,7 @@ name = "5_mps2statevector"
 name = "6_statevector2mps"
 
 [[bin]]
-name = "9_function2qtt"
+name = "7_tebd"
+
+[[bin]]
+name = "8_function2qtt"
