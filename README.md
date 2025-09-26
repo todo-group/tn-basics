@@ -23,3 +23,6 @@
 * materials: 参考資料
     - 以前の講義資料等
 
+* Julia
+  - `using Pkg; Pkg.add(["Images", "ImageIO", "Plots", "TensorOperations"])`
+

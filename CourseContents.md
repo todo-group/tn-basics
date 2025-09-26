@@ -47,12 +47,12 @@
   - 1-qubitゲートと2-qubitゲート
   - TEBD
   - HOL: TEBD (7_tebd)
-  - OPT: カノニカル形式 (8_canonical-form)
+  - (OPT: カノニカル形式)
 - 階層構造の圧縮表現
   - QTT (Quantics Tensor Train)表現 [3]
   - QTT表現の例: 指数関数、三角関数 [2]
-  - HOL: 一次元関数のQTT表現 (9_function2qtt)
+  - HOL: 一次元関数のQTT表現 (8_function2qtt)
     - 指数関数、三角関数、正規分布関数
   - QTTの微分 [2]
-  - HOL: 差分演算子のMPO表現 (10_finite-difference)
-  - OPT: フーリエ変換 (11_fourier-transform)
+  - HOL: 差分演算子のMPO表現 (9_finite-difference)
+  - (OPT: フーリエ変換)
