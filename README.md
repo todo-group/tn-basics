@@ -15,13 +15,21 @@
         - 5_mps2statevector
         - 6_statevector2mps
         - 7_tebd
-        - 8_canonical-form (optional)
-        - 9_function2qtt
-        - 10_finite-difference
-        - 11_fourier-transform (optional)
+        - 8_function2qtt
+        - 9_finite-difference
 
 * materials: 参考資料
     - 以前の講義資料等
+
+* Python
+    - 以下、`python` ディレクトリ内での実行を想定
+    - Python の仮想環境準備
+        - `python3 -m venv .venv`
+        - `source .venv/bin/activate`
+    - 必要なパッケージのインストール
+        - `pip3 install -r requirements.txt`
+    - 実行例
+        - `python3 1_svd.py`
 
 * Julia
     - 以下, `julia` ディレクトリ内での実行を想定
@@ -38,3 +46,10 @@
     - `include("path/to/<file>.jl")`: `<file>.jl` 実行
         - `julia --project <file>.jl` でも実行できるが、`repl` 内で `include` するとプログラムのコンパイル結果がキャッシュされるため、2回目以降の実行が高速になる
         - ファイルの内容を変更したとしても、再コンパイルはファイルごとに行われるため、`include` の方が効率的
+
+* Rust
+    - 以下, `rust` ディレクトリ内での実行を想定
+    - コンパイル
+        - `cargo build`
+    - 実行例
+        - `cargo run --bin 1_svd`
