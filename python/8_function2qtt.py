@@ -73,6 +73,7 @@ def main():
     plt.title("error")
     plt.legend()
     plt.show()
-    
+
+
 if __name__ == "__main__":
     main()
