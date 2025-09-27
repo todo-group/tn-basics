@@ -45,7 +45,7 @@ function apply_2q!(
     G::AbstractArray{<:Complex{<:Real}, 4},
 )
     n = ndims(state)
-    order = vcat(pos, pos+1, setdiff(1:n, [pos, pos + 1]))
+    order = vcat(pos, pos + 1, setdiff(1:n, [pos, pos + 1]))
     invorder = invperm(order)
     st = permutedims(state, order)                 # (2,2,2,2, ..., 2)
     st2 = reshape(st, 2, 2, :)
