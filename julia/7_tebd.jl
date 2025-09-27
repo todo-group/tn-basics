@@ -139,7 +139,7 @@ function main()
             @tensor tmp[a, c, d] := ψ0[a, b] * mps0[i][b, c, d]
             ψ0 = reshape(tmp, size(tmp, 1) * size(tmp, 2), size(tmp, 3))
         end
-        ψ0_vec = vec(permutedims(ψ0))  # row-major flatten
+        ψ0_vec = vec(ψ0)  # column-major flatten
 
         # MPS から状態再構成（mps1）
         ψ1 = mps1[1]
@@ -148,9 +148,9 @@ function main()
             @tensor tmp[a, c, d] := ψ1[a, b] * mps1[i][b, c, d]
             ψ1 = reshape(tmp, size(tmp, 1) * size(tmp, 2), size(tmp, 3))
         end
-        ψ1_vec = vec(permutedims(ψ1))
+        ψ1_vec = vec(ψ1)
 
-        # フル state をベクトル化（row-major）
+        # フル state をベクトル化（column-major）
         st_vec = vec(state)
 
         fid0 = abs2(dot(st_vec, ψ0_vec))
