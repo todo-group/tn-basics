@@ -3,20 +3,18 @@ use ndarray::{Array1, Array2, ArrayBase, Data, Ix2};
 use ndarray_linalg::{Lapack, SVD, Scalar, error::LinalgError};
 
 // unfortunaletely, ndarray-linalg does not provide thin_svd function, though internally it appears to have options for thin svd.
-// here we define a thin_svd function that uses the full svd and slice the unitary matrices accordingly.
+// also, svd function in ndarray-linalg require flags to calc U,Vt, while we usually use both.
+// here we define a full_svd / thin_svd function that uses the full svd and slice the unitary matrices accordingly.
 
-pub trait ThinSVD {
+pub trait EasySVD {
     type U;
     type VT;
     type Sigma;
-    fn thin_svd(
-        &self,
-        calc_u: bool,
-        calc_vt: bool,
-    ) -> Result<(Option<Self::U>, Self::Sigma, Option<Self::VT>), LinalgError>;
+    fn thin_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError>;
+    fn full_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError>;
 }
 
-impl<A, S> ThinSVD for ArrayBase<S, Ix2>
+impl<A, S> EasySVD for ArrayBase<S, Ix2>
 where
     A: Scalar + Lapack,
     S: Data<Elem = A>,
@@ -25,21 +23,25 @@ where
     type VT = Array2<A>;
     type Sigma = Array1<A::Real>;
 
-    fn thin_svd(
-        &self,
-        calc_u: bool,
-        calc_vt: bool,
-    ) -> Result<(Option<Self::U>, Self::Sigma, Option<Self::VT>), LinalgError> {
-        let (u, s, vt) = self.svd(calc_u, calc_vt)?;
+    fn full_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError> {
+        let (u, s, vt) = self.svd(true, true)?;
+        let u = u.unwrap();
+        let vt = vt.unwrap();
 
-        let u_thin = u.map(|u| u.slice(s![.., ..s.len()]).to_owned());
-        let vt_thin = vt.map(|vt| vt.slice(s![..s.len(), ..]).to_owned());
+        Ok((u, s, vt))
+    }
+
+    fn thin_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError> {
+        let (u, s, vt) = self.full_svd()?;
+
+        let u_thin = u.slice(s![.., ..s.len()]).into_owned();
+        let vt_thin = vt.slice(s![..s.len(), ..]).into_owned();
 
         Ok((u_thin, s, vt_thin))
     }
 }
 
-pub trait MapStrToAnyhowErr{
+pub trait MapStrToAnyhowErr {
     type Ok;
     fn map_str_err(self) -> Result<Self::Ok, anyhow::Error>;
 }
