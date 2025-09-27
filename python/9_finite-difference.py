@@ -81,8 +81,8 @@ def main():
     s = s_qtt[0].copy()
     st = s.transpose((1, 0, 2))
     d = np.zeros((2, 2, 2 * s.shape[2]))
-    d[:, :, : s.shape[2]] = s
-    d[:, :, s.shape[2] :] = -st  # minus sign for derivative
+    d[:, :, : s.shape[2]] = -s  # minus sign for derivative
+    d[:, :, s.shape[2] :] = st
     d_qtt.append(d)
     for k in range(1, depth - 1):
         s = s_qtt[k].copy()
@@ -120,14 +120,14 @@ def main():
 
     """apply finite-difference operator to target function"""
     dy_qtt = []
-    t = np.einsum("jkl,jn->knl", d_qtt[0], qtt[0])
+    t = np.einsum("jkl,kn->jnl", d_qtt[0], qtt[0])
     t = t.reshape(t.shape[0], t.shape[1] * t.shape[2])
     dy_qtt.append(t)
     for k in range(1, depth - 1):
-        t = np.einsum("ijkl,mjn->miknl", d_qtt[k], qtt[k])
+        t = np.einsum("ijkl,mkn->mijnl", d_qtt[k], qtt[k])
         t = t.reshape(t.shape[0] * t.shape[1], t.shape[2], t.shape[3] * t.shape[4])
         dy_qtt.append(t)
-    t = np.einsum("ijk,mj->mik", d_qtt[depth - 1], qtt[depth - 1])
+    t = np.einsum("ijk,mk->mij", d_qtt[depth - 1], qtt[depth - 1])
     t = t.reshape(t.shape[0] * t.shape[1], t.shape[2])
     dy_qtt.append(t)
     print(
@@ -146,8 +146,9 @@ def main():
     x = x[1:-2]
     dy = dy[1:-2]
     dyr = dyr[1:-2]
-    print(f"target derivative y' = {dy}\n")
-    print(f"QTT derivative y' = {dyr}\n")
+    if depth < 5:
+        print(f"target derivative y' = {dy}\n")
+        print(f"QTT derivative   y' = {dyr}\n")
     print(f"error = {np.linalg.norm(dy - dyr) / len(dy)}\n")
 
     plt.figure()

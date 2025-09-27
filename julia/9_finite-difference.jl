@@ -74,8 +74,8 @@ function main()
     d_qtt = Array{Float64}[]
     s = copy(s_qtt[1]);  st = permutedims(s, (2,1,3))
     d = zeros(2, 2, 2*size(s,3))
-    @views d[:,:, 1:size(s,3)] .= s
-    @views d[:,:, size(s,3)+1:end] .= -st # minus sign for derivative
+    @views d[:,:, 1:size(s,3)] .= -s # minus sign for derivative
+    @views d[:,:, size(s,3)+1:end] .= st
     push!(d_qtt, d)
     for k in 2:(depth-1)
         s = copy(s_qtt[k])
@@ -111,18 +111,18 @@ function main()
     dy_qtt = Array{Float64}[]
     D = d_qtt[1]
     Y = qtt[1]
-    @tensor tmp[k,l,n] := D[j,k,l] * Y[j,n]
+    @tensor tmp[j,l,n] := D[j,k,l] * Y[k,n]
     push!(dy_qtt, reshape(tmp, size(tmp,1), size(tmp,3)*size(tmp,2)))
     for k in 2:(depth-1)
         D = d_qtt[k]
         Y = qtt[k]
         # not [m,i,k,n,l] but [i,m,k,l,n] because of column-major order
-        @tensor tmp[i,m,k,l,n] := D[i,j,k,l] * Y[m,j,n]
+        @tensor tmp[i,m,j,l,n] := D[i,j,k,l] * Y[m,k,n]
         push!(dy_qtt, reshape(tmp, size(tmp,2)*size(tmp,1), size(tmp,3), size(tmp,5)*size(tmp,4)))
     end
     D = d_qtt[end]
     Y = qtt[end]
-    @tensor tmp[i,m,k] := D[i,j,k] * Y[m,j]
+    @tensor tmp[i,m,j] := D[i,j,k] * Y[m,k]
     push!(dy_qtt, reshape(tmp, size(tmp,2)*size(tmp,1), size(tmp,3)))
     println("derivative QTT virtual dimensions: ", [size(dy_qtt[k]) for k in 1:depth], "\n")
 
@@ -140,8 +140,10 @@ function main()
     x2  = x[2:end-1]
     dy2 = dy[2:end-1]
     dyr2 = dyr[2:end-1]
-    println("target derivative y' = ", dy2, "\n")
-    println("QTT derivative   y' = ", dyr2, "\n")
+    if depth < 5
+        println("target derivative y' = ", dy2, "\n")
+        println("QTT derivative   y' = ", dyr2, "\n")
+    end
     err = norm(dy2 .- dyr2) / length(dy2)
     println("error = ", err, "\n")
 

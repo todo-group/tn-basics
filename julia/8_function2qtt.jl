@@ -46,7 +46,6 @@ function main()
         yt = (Diagonal(S[1:rank_new]) * Vt)
         rank = rank_new
     end
-    # yt = reshape(yt, rank, 2)
     println("depth: $(depth-1)")
     push!(qtt, yt)
     if depth < 5
