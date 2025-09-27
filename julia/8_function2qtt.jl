@@ -31,8 +31,8 @@ function main()
     rank = 1
     for k in 0:(depth-2)
         println("depth: $k")
-        yt_mat = transpose(reshape(yt, :, rank * 2))
-        F = svd(yt_mat; full=false)
+        yt = reshape(permutedims(reshape(yt, rank, :, 2), (3,1,2)), 2 * rank, :)
+        F = svd(yt; full=false)
         S = F.S
         println("singular values: ", S)
         rank_new = findall(>(cutoff * S[1]), S)
@@ -40,13 +40,13 @@ function main()
         U = F.U[:, 1:rank_new]
         Vt = F.Vt[1:rank_new, :]
         if k > 0
-            U = reshape(U, rank, 2, rank_new)
+            U = permutedims(reshape(U, 2, rank, rank_new), (2,1,3))
         end
         push!(qtt, U)
         yt = (Diagonal(S[1:rank_new]) * Vt)
         rank = rank_new
     end
-    yt = reshape(yt, rank, 2)
+    # yt = reshape(yt, rank, 2)
     println("depth: $(depth-1)")
     push!(qtt, yt)
     if depth < 5
