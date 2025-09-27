@@ -130,7 +130,7 @@ def main():
         dyr = dyr.reshape(dyr.shape[0] * dyr.shape[1], dyr.shape[2])
     dyr = dyr.reshape(-1)
 
-    # remove edge points as derivative is not correct there
+    """drop boundary points as derivative is not correct there due to boundary conditions"""
     x = x[1:-2]
     dy = dy[1:-2]
     dyr = dyr[1:-2]
@@ -140,12 +140,12 @@ def main():
 
     plt.figure()
     plt.plot(x, dy, label="target")
-    plt.plot(x, dyr, label="QTT 1")
+    plt.plot(x, dyr, label="QTT")
     plt.legend()
     plt.show()
 
     plt.figure()
-    plt.plot(x, dy - dyr, label="error 1")
+    plt.plot(x, dy - dyr, label="error")
     plt.title("error")
     plt.legend()
     plt.show()

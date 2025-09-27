@@ -3,6 +3,7 @@
 """
 QTT representation of finite-difference operator (Julia)
 """
+
 using LinearAlgebra
 using TensorOperations
 using Plots
@@ -13,33 +14,32 @@ function main()
     cutoff  = 1e-10
     max_rank = 4
 
-    # target function & derivative
-    x  = range(0.0, 1.0; length=npoints) |> collect
-    y  = exp.(x)
-    dy = exp.(x)
-    # y  = cos.(x);  dy = -sin.(x)
-    # y  = @. exp(-(((x - 0.5)/0.1)^2)) / (0.1 * sqrt(pi));  dy = @. -2.0*(x-0.5)*y/(0.1^2)
+    # target function and its derivative
+    x = range(0.0, 1.0; length=npoints) |> collect
+    y = exp.(x); dy = exp.(x)
+    # y = cos.(x); dy = -sin.(x)
+    # y = @. exp(-(((x - 0.5)/0.1)^2)) / (0.1 * sqrt(pi)); dy = @. -2.0*(x-0.5)*y/(0.1^2)
 
-    # QTT decomposition of y
-    yt   = copy(y)
-    qtt  = Vector{Array{Float64,3}}()
+    # QTT decomposition of target function
+    yt = copy(y)
+    qtt = Vector{Array{Float64,3}}()
     rank = 1
     for k in 0:(depth-2)
-        yt_mat = reshape(yt, rank*2, :)
+        yt_mat = transpose(reshape(yt, :, rank*2))
         F = svd(yt_mat; full=false)
         S = F.S
-        keep = findall(>(cutoff*S[1]), S)
-        r = min(length(keep), max_rank)
-        U = F.U[:, 1:r]
-        Vt = F.Vt[1:r, :]
-        push!(qtt, reshape(U, rank, 2, r))
-        yt = Diagonal(S[1:r]) * Vt
-        rank = r
+        rank_new = findall(>(cutoff*S[1]), S)
+        rank_new = min(length(rank_new), max_rank)
+        U = F.U[:, 1:rank_new]
+        Vt = F.Vt[1:rank_new, :]
+        push!(qtt, reshape(U, rank, 2, rank_new))
+        yt = Diagonal(S[1:rank_new]) * Vt
+        rank = rank_new
     end
     push!(qtt, reshape(yt, rank, 2, 1))
     println("QTT virtual dimensions: ", [size(qtt[k]) for k in 1:depth], "\n")
 
-    # QTT for index shift operator (left shift; sameビット構成)
+    # QTT for index shift operator
     s_qtt = Vector{Array{Float64,4}}()
     s = zeros(1,2,2,2)
     s[1,1,1,1] = 1.0; s[1,2,2,1] = 1.0; s[1,2,1,2] = 1.0; s[1,1,2,2] = 1.0
@@ -54,7 +54,7 @@ function main()
     push!(s_qtt, s)
     println("index shift operator virtual dimensions: ", [size(s_qtt[k]) for k in 1:depth], "\n")
 
-    # check (only for small depth)
+    # check for index shift operator
     if depth < 5
         # build dense shift matrix of size npoints×npoints
         sop = reshape(s_qtt[1], 2,2,2)
@@ -66,15 +66,13 @@ function main()
         println("index shift operator:\n", sop, "\n")
     end
 
-    # QTT for finite-difference operator (D ≈ (Shift - Shift^T)/Δx with scaling factors)
+    # QTT for finite-difference operator
     d_qtt = Vector{Array{Float64,4}}()
-    # first core
     s  = copy(s_qtt[1]);  st = permutedims(s, (1,3,2,4))
     d  = zeros(size(s,1), 2,2, 2*size(s,4))
     @views d[:,:,:, 1:size(s,4)]      .= s
-    @views d[:,:,:, size(s,4)+1:end]  .= -st
+    @views d[:,:,:, size(s,4)+1:end]  .= -st # minus sign for derivative
     push!(d_qtt, d)
-    # middle cores
     for k in 2:(depth-1)
         s  = copy(s_qtt[k]);  st = permutedims(s, (1,3,2,4))
         d  = zeros(2*size(s,1), 2,2, 2*size(s,4))
@@ -82,7 +80,6 @@ function main()
         @views d[size(s,1)+1:end,:,:, size(s,4)+1:end]        .= 2 .* st
         push!(d_qtt, d)
     end
-    # last core
     s  = copy(s_qtt[end]);  st = permutedims(s, (1,3,2,4))
     d  = zeros(2*size(s,1), 2,2, size(s,4))
     @views d[1:size(s,1),:,:,:]      .= 2 .* s
@@ -91,6 +88,7 @@ function main()
     println("finite-difference operator virtual dimensions: ",
             [size(d_qtt[k]) for k in 1:depth], "\n")
 
+    # check for finite-difference operator
     if depth < 5
         dop = reshape(d_qtt[1], 2,2,4)
         for k in 2:depth
@@ -101,7 +99,7 @@ function main()
         println("finite-difference operator:\n", dop, "\n")
     end
 
-    # apply finite-difference operator to QTT(y)
+    # apply finite-difference operator to target function
     dy_qtt = Vector{Array{Float64,3}}()
     for k in 1:depth
         D = d_qtt[k];  Y = qtt[k]
@@ -120,7 +118,7 @@ function main()
     # flatten (row-major)
     dyr = vec(permutedims(dyr))
 
-    # drop boundary points (not accurate at edges)
+    # drop boundary points as derivative is not correct there due to boundary conditions
     x2  = x[2:end-1]
     dy2 = dy[2:end-1]
     dyr2 = dyr[2:end-1]
@@ -129,13 +127,14 @@ function main()
     err = norm(dy2 .- dyr2) / length(dy2)
     println("error = ", err, "\n")
 
-    # plots
     p1 = plot(x2, dy2, label="target")
-    plot!(p1, x2, dyr2, label="QTT 1")
+    plot!(p1, x2, dyr2, label="QTT")
     display(p1)
+    readline()
 
-    p2 = plot(x2, dy2 .- dyr2, label="error 1", title="error")
+    p2 = plot(x2, dy2 .- dyr2, label="error", title="error")
     display(p2)
+    readline()
 end
 
 main()
