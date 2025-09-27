@@ -1,6 +1,7 @@
 # 超初心者のためのテンソルネットワーク講座
 
 * [CourseContents.md: 講義内容](CourseContents.md)
+* 講義資料: [tn-basics.pdf](tn-basics.pdf)
 * [data: 実習で使用するデータファイル](data)
 * 実習コード
     - 言語
