@@ -9,7 +9,7 @@ using TensorOperations
 using Plots
 
 function main()
-    depth = 8
+    depth = 4
     npoints = 2^depth
     cutoff = 1e-10
     max_rank = 4
@@ -17,7 +17,7 @@ function main()
     # target function
     x = range(0.0, 1.0; length=npoints)
     y = exp.(x)
-    # y = sin.(x)
+    # y = cos.(x)
     # y = @. exp(-(((x - 0.5) / 0.1)^2)) / (0.1 * sqrt(pi))
 
     if depth < 5
@@ -31,49 +31,43 @@ function main()
     rank = 1
     for k in 0:(depth-2)
         println("depth: $k")
-        yt_mat = reshape(yt, rank * 2, :)
+        yt_mat = transpose(reshape(yt, :, rank * 2))
         F = svd(yt_mat; full=false)
         S = F.S
         println("singular values: ", S)
-        # truncate by cutoff and max_rank
-        keep = findall(>(cutoff * S[1]), S)
-        r = min(length(keep), max_rank)
-        r == 0 && (error("All singular values truncated at depth $k"))
-        U = F.U[:, 1:r]
-        Vt = F.Vt[1:r, :]
-
+        rank_new = findall(>(cutoff * S[1]), S)
+        rank_new = min(length(rank_new), max_rank)
+        U = F.U[:, 1:rank_new]
+        Vt = F.Vt[1:rank_new, :]
         if k > 0
-            U = reshape(U, rank, 2, r)
+            U = reshape(U, rank, 2, rank_new)
         end
-        println("tensor shape: ", size(U), "\n")
         push!(qtt, U)
-
-        yt = (Diagonal(S[1:r]) * Vt)   # next "right" core
-        rank = r
+        yt = (Diagonal(S[1:rank_new]) * Vt)
+        rank = rank_new
     end
-    yt_last = reshape(yt, rank, 2)
+    yt = reshape(yt, rank, 2)
     println("depth: $(depth-1)")
-    println("tensor shape: ", size(yt_last), "\n")
-    push!(qtt, yt_last)
-
+    push!(qtt, yt)
     if depth < 5
         println("qtt: ", qtt, "\n")
     end
 
     # reconstruction
-    yr = qtt[1]::Matrix{Float64}    # (2, r1) もしくは (rank0,2,r1) だが最初は (2, r1)
+    yr = qtt[1]::Matrix{Float64}
     for k in 2:(depth-1)
-        @tensor tmp[i, k, l] := yr[i, j] * qtt[k][j, k, l]   # (i k l)
-        yr = reshape(tmp, size(tmp, 1) * size(tmp, 2), size(tmp, 3))
+        # not [i, k, l] but [k, i, l] because of column-major order
+        @tensor tmp[k, i, l] := yr[i, j] * qtt[k][j, k, l]
+        yr = reshape(tmp, size(tmp, 2) * size(tmp, 1), size(tmp, 3))
     end
     @tensor yr2[i, k] := yr[i, j] * qtt[end][j, k]
-    # Python の reshape(-1) 相当（row-major）に合わせたい場合は行を入替後 vec
-    state = vec(permutedims(yr2))  # flatten in row-major order
-
+    state = vec(transpose(yr2))
     err = norm(y .- state) / npoints
     println("error = $err\n")
 
-    # plot
+    if depth < 5
+        println("reconstructed y = ", state, "\n")
+    end
     plt = plot(x, y, label="target")
     if npoints <= 32
         plot!(x, state, seriestype=:scatter, label="QTT")
@@ -81,6 +75,10 @@ function main()
         step = Int(cld(npoints, 32))
         plot!(x[1:step:end], state[1:step:end], seriestype=:scatter, label="QTT")
     end
+    display(plt)
+    readline()
+
+    plt = plot(x, y - state, label="error")
     display(plt)
     readline()
 end

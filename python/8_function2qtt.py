@@ -9,7 +9,7 @@ import numpy as np
 
 
 def main():
-    depth = 8
+    depth = 4
     npoints = 2**depth
     cutoff = 1e-10
     max_rank = 4
@@ -17,7 +17,7 @@ def main():
     """target function"""
     x = np.linspace(0.0, 1.0, npoints)
     y = np.exp(x)
-    # y = np.sin(x)
+    # y = np.cos(x)
     # y = np.exp(-(((x - 0.5) / 0.1) ** 2)) / (0.1 * np.sqrt(np.pi))
     if depth < 5:
         print(f"x = {x}")
@@ -39,17 +39,16 @@ def main():
         Vt = Vt[:rank_new, :]
         if k > 0:
             U = U.reshape((rank, 2, rank_new))
-        print(f"tensor shape: {U.shape}\n")
         qtt.append(U)
         yt = np.dot(np.diag(S), Vt)
         rank = rank_new
     yt = yt.reshape((rank, 2))
     print(f"depth: {depth - 1}")
-    print(f"tensor shape: {yt.shape}\n")
     qtt.append(yt)
     if depth < 5:
         print(f"qtt: {qtt}\n")
 
+    """reconstruction"""
     yr = qtt[0]
     for k in range(1, depth - 1):
         yr = np.einsum("ij,jkl->ikl", yr, qtt[k])
@@ -69,6 +68,11 @@ def main():
     plt.legend()
     plt.show()
 
-
+    plt.figure()
+    plt.plot(x, y - yr, label="error")
+    plt.title("error")
+    plt.legend()
+    plt.show()
+    
 if __name__ == "__main__":
     main()
