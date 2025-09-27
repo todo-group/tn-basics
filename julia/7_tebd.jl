@@ -95,7 +95,6 @@ function main()
     depth   = 16      # layers
     max_dim = 4       # χmax for truncated MPS
     cutoff  = 1e-10
-    rng = MersenneTwister(816)
 
     # CNOT (control = first, target = second)
     cnot = zeros(ComplexF64, (2, 2, 2, 2))
@@ -119,7 +118,7 @@ function main()
     for k in 0:depth - 1
         # ランダム1量子ゲート
         for pos in 1:n
-            U = random_u(rng = rng)
+            U = random_u()
             apply_1q!(state, pos, U)
             @tensor mps0[pos][a, i, b] := U[i, j] * mps0[pos][a, j, b]
             @tensor mps1[pos][a, i, b] := U[i, j] * mps1[pos][a, j, b]
