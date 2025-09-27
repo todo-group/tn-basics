@@ -38,3 +38,6 @@ name = "7_tebd"
 
 [[bin]]
 name = "8_function2qtt"
+
+[[bin]]
+name = "9_finite-difference"
