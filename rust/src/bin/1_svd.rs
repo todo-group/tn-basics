@@ -17,8 +17,8 @@ fn main() -> anyhow::Result<()> {
     println!("Vt =\n{}\n", vt);
 
     // reconstruct A
-    let s_mat = Array2::from_diag(&s);
-    let a_reconstructed = u.dot(&s_mat).dot(&vt);
+    let s_matrix = Array2::from_diag(&s);
+    let a_reconstructed = u.dot(&s_matrix).dot(&vt);
     println!("reconstructed A =\n{}\n", a_reconstructed);
 
     // full SVD
