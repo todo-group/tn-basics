@@ -74,9 +74,11 @@ function main()
         plot!(x[1:step:end], state[1:step:end], seriestype=:scatter, label="QTT")
     end
     display(plt)
+    readline()
 
     plt = plot(x, y - state, label="error")
     display(plt)
+    readline()
 end
 
 main()

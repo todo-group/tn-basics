@@ -24,6 +24,7 @@ function main()
     plt = heatmap(A; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
         axis=nothing, title="original image")
     display(plt)
+    readline()
 
     # SVD (thin)
     F = svd(A; full=false)   # U: H×min(H,W), S: Vector, V: W×W
@@ -41,6 +42,7 @@ function main()
         plt = heatmap(Ar; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
             axis=nothing, title="reconstructed image (rank $(rr))")
         display(plt)
+        readline()
     end
 end
 

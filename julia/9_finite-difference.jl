@@ -158,9 +158,11 @@ function main()
     p1 = plot(x2, dy2, label="target")
     plot!(p1, x2, dyr2, label="QTT")
     display(p1)
+    readline()
 
     p2 = plot(x2, dy2 .- dyr2, label="error", title="error")
     display(p2)
+    readline()
 end
 
 main()
