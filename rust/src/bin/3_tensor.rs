@@ -1,9 +1,13 @@
-use ndarray::{array, Array1, Array2, Array3, s};
+use ndarray::{Array1, Array2, Array3, array, s};
 use rand::random;
 
 extern crate blas_src;
 
+// Tensor definition examples
+
 fn main() {
+    // tensor definition
+
     println!("vector (1-leg tensor)");
     let t1: Array1<i32> = array![1, 2, 3];
     println!("t1 = {}", t1);
@@ -19,13 +23,10 @@ fn main() {
     println!("t2[1,2] = {}\n", t2[(1, 2)]);
 
     println!("3D array (3-leg tensor)");
-    let a: Array3<i32> = array![
-        [[1, 2], [3, 4]],
-        [[5, 6], [7, 8]]
-    ];
+    let a: Array3<i32> = array![[[1, 2], [3, 4]], [[5, 6], [7, 8]]];
     println!("A =\n{}\n", a);
     println!("A.shape = {:?}", a.shape());
-    println!("A[0,0,0] = {}", a[(0,0,0)]);
-    println!("A[1,1,1] = {}", a[(1,1,1)]);
+    println!("A[0,0,0] = {}", a[(0, 0, 0)]);
+    println!("A[1,1,1] = {}", a[(1, 1, 1)]);
     println!("A[:,0,1] = {}", a.slice(s![.., 0, 1]));
 }

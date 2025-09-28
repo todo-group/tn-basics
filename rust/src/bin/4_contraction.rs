@@ -5,6 +5,8 @@ use tn_basics::MapStrToAnyhowErr;
 
 extern crate blas_src;
 
+// Tensor contraction examples
+
 fn main() -> anyhow::Result<()> {
     println!("matrix-matrix multiplication");
     let a = Array::from_shape_fn((2, 3), |_| random::<f64>());
