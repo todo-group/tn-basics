@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
-# -*- coding: utf-8 -*-
-#
-# Compress and reconstruct grayscale images using SVD (Julia)
+"""
+Compress and reconstruct grayscale images using SVD (Julia)
+"""
 
 using Images, ImageIO
 using LinearAlgebra

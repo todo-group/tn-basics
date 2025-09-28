@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
-# -*- coding: utf-8 -*-
-#
-# SVD and low-rank approximation of a matrix
+"""
+SVD and low-rank approximation of a matrix
+"""
 
 using LinearAlgebra
 using Printf

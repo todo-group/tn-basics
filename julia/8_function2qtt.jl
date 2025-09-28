@@ -1,5 +1,4 @@
 #!/usr/bin/env julia
-# -*- coding: utf-8 -*-
 """
 Conversion of one-dimensional function into QTT representation (Julia)
 """
@@ -31,7 +30,7 @@ function main()
     rank = 1
     for k in 0:(depth-2)
         println("depth: $k")
-        yt = reshape(permutedims(reshape(yt, rank, :, 2), (3,1,2)), 2 * rank, :)
+        yt = reshape(permutedims(reshape(yt, rank, :, 2), (3, 1, 2)), 2 * rank, :)
         F = svd(yt; full=false)
         S = F.S
         println("singular values: ", S)
@@ -40,7 +39,7 @@ function main()
         U = F.U[:, 1:rank_new]
         Vt = F.Vt[1:rank_new, :]
         if k > 0
-            U = permutedims(reshape(U, 2, rank, rank_new), (2,1,3))
+            U = permutedims(reshape(U, 2, rank, rank_new), (2, 1, 3))
         end
         push!(qtt, U)
         yt = (Diagonal(S[1:rank_new]) * Vt)

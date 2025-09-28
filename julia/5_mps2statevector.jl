@@ -1,5 +1,4 @@
 #!/usr/bin/env julia
-# -*- coding: utf-8 -*-
 """
 Generate statevector from MPS (Julia)
 """
