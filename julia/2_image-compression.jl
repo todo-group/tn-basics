@@ -10,17 +10,12 @@ using Plots
 function main()
     path = "../data/sqai-square-gray-rgb150ppi.jpg"  # 入力画像パス
 
-    # FIXME: 型安定性を向上
     # 画像を読み込み → グレイスケール化 → 行列（Float64）へ
-    img = load(path)
+    img = load(path)::Matrix{RGB{N0f8}}
     gimg = Gray.(img)  # RGBでもGrayに
-    # FIXME: 最初から2次元になっている? (Images v0.26)
-    #
-    # # channelview(gimg): 1×H×W、これを H×W に
-    # # A01 = Array{Float64}(permutedims(channelview(gimg), (2, 3, 1))[:, :, 1])
     A01 = channelview(gimg)
-    # Python版は 0..255 の画素値: 0..1 の場合はスケールを合わせる
-    A = maximum(A01) <= 1.0 ? A01 .* 255.0 : A01
+    # Python版は 0..255 の画素値: スケールを合わせる
+    A = A01 .* 255.0
 
     h, w = size(A)
     println("image size; $h $w\n")
@@ -29,7 +24,6 @@ function main()
     plt = heatmap(A; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
         axis=nothing, title="original image")
     display(plt)
-    readline()
 
     # SVD (thin)
     F = svd(A; full=false)   # U: H×min(H,W), S: Vector, V: W×W
@@ -47,7 +41,6 @@ function main()
         plt = heatmap(Ar; c=:greys, clim=(0, 255), aspect_ratio=:equal, yflip=true,
             axis=nothing, title="reconstructed image (rank $(rr))")
         display(plt)
-        readline()
     end
 end
 
