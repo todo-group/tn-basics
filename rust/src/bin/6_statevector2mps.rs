@@ -33,7 +33,6 @@ fn main() -> anyhow::Result<()> {
 
     let mut mps: Vec<ArrayD<f64>> = Vec::new();
     let mut rank: usize = 1;
-
     for i in 0..(n - 1) {
         let v_view = v.to_shape((rank * 2, v.len() / (rank * 2)))?;
         let (u, s, vt) = v_view.thin_svd()?;
@@ -57,11 +56,11 @@ fn main() -> anyhow::Result<()> {
     }
     let v = v.to_shape((rank, 2))?.into_owned().into_dyn();
     mps.push(v);
-
-    println!("tensors:");
-    for (i, t) in mps.iter().enumerate() {
-        println!("  {}:\n{}", i, t);
+    println!("tensors:[");
+    for t in mps.iter() {
+        println!("{}", t);
     }
+    println!("]");
 
     // random state
     let n: usize = 16;
@@ -72,7 +71,6 @@ fn main() -> anyhow::Result<()> {
 
     let mut mps: Vec<ArrayD<f64>> = Vec::new();
     let mut rank: usize = 1;
-
     for i in 0..(n - 1) {
         let v_view = v.to_shape((rank * 2, v.len() / (rank * 2)))?;
         let (u, s, vt) = v_view.thin_svd()?;

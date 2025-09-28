@@ -1,3 +1,5 @@
+pub mod plot;
+
 use ndarray::s;
 use ndarray::{Array1, Array2, ArrayBase, Data, Ix2};
 use ndarray_linalg::{Lapack, SVD, Scalar, error::LinalgError};
@@ -34,8 +36,8 @@ where
     fn thin_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError> {
         let (u, s, vt) = self.full_svd()?;
 
-        let u_thin = u.slice(s![.., ..s.len()]).into_owned();
-        let vt_thin = vt.slice(s![..s.len(), ..]).into_owned();
+        let u_thin = u.slice_move(s![.., ..s.len()]);
+        let vt_thin = vt.slice_move(s![..s.len(), ..]);
 
         Ok((u_thin, s, vt_thin))
     }
