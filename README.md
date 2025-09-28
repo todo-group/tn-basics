@@ -33,7 +33,7 @@
         - `python3 1_svd.py`
 
 * Julia
-    - 以下, `julia` ディレクトリ内での実行を想定
+    - 以下、`julia` ディレクトリ内での実行を想定
     - `julia`: `repl` 起動
         - 以下 `repl` 内で実行する
     - `using Pkg; Pkg.activate(".")`: プロジェクト環境を activate
@@ -49,7 +49,7 @@
         - ファイルの内容を変更したとしても、再コンパイルはファイルごとに行われるため、`include` の方が効率的
 
 * Rust
-    - 以下, `rust` ディレクトリ内での実行を想定
+    - 以下、`rust` ディレクトリ内での実行を想定
     - コンパイル
         - `cargo build`
     - 実行例
