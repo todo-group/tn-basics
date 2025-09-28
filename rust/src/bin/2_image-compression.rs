@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
     // load image and convert to grayscale
     let image = ImageReader::open(path)?.decode()?.into_luma8();
     let array = to_gray_ndarray(&image, |v| v as f64);
-    let [w, h] = array.shape() else {
+    let [h, w] = array.shape() else {
         panic!("unexpected shape");
     };
     println!("image size; {} {}\n", h, w);
