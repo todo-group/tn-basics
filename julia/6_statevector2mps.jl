@@ -37,7 +37,6 @@ function main()
 
     mps = Array{Float64}[]
     rank = 1
-    # FIXME: 型安定性を向上
     V = copy(v)
 
     for i in 0:(n-2)
