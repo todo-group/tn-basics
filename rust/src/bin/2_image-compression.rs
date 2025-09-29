@@ -1,5 +1,6 @@
 use image::{GrayImage, ImageBuffer, ImageReader, Luma};
 use ndarray::{Array1, Array2, ArrayBase, Data, Ix1, Ix2, s};
+use num_traits::ToPrimitive;
 use plotters::{
     chart::ChartBuilder,
     coord::Shift,
@@ -11,8 +12,6 @@ use plotters::{
     style::{BLUE, WHITE},
 };
 use tn_basics::EasySVD;
-
-extern crate blas_src;
 
 fn to_gray_ndarray<E>(img: &GrayImage, mut map_u8: impl FnMut(u8) -> E) -> Array2<E> {
     let (w, h) = img.dimensions();
@@ -29,11 +28,9 @@ fn to_gray_image<S: Data>(
     arr: &ArrayBase<S, Ix2>,
     mut map_e: impl FnMut(&S::Elem) -> u8,
 ) -> GrayImage {
-    let h = arr.nrows();
-    let w = arr.ncols();
-    ImageBuffer::from_fn(w as u32, h as u32, |x, y| {
-        Luma([map_e(&arr[(y as usize, x as usize)])])
-    })
+    let h = arr.nrows().try_into().unwrap();
+    let w = arr.ncols().try_into().unwrap();
+    ImageBuffer::from_fn(w, h, |x, y| Luma([map_e(&arr[(y as usize, x as usize)])]))
 }
 
 fn plot_singular_values<S: Data<Elem = f64>, DB: DrawingBackend>(
@@ -41,8 +38,8 @@ fn plot_singular_values<S: Data<Elem = f64>, DB: DrawingBackend>(
     area: &DrawingArea<DB, Shift>,
 ) -> Result<(), DrawingAreaErrorKind<DB::ErrorType>> {
     area.fill(&WHITE)?;
-    let max_y = s.iter().cloned().fold(f64::MIN, f64::max).max(1e-12);
-    let min_y = s.iter().cloned().fold(f64::MAX, f64::min).min(1e+12);
+    let max_y = s.iter().copied().fold(f64::MIN, f64::max).max(1e-12);
+    let min_y = s.iter().copied().fold(f64::MAX, f64::min).min(1e+12);
 
     let mut chart = ChartBuilder::on(area)
         .caption("singular values", ("sans-serif", 24))
@@ -63,19 +60,19 @@ fn plot_singular_values<S: Data<Elem = f64>, DB: DrawingBackend>(
 }
 
 // Compress and reconstruct grayscale images using SVD
-
+#[expect(clippy::many_single_char_names)]
 fn main() -> anyhow::Result<()> {
     let path = "../data/sqai-square-gray-rgb150ppi.jpg";
 
     // load image and convert to grayscale
     let image = ImageReader::open(path)?.decode()?.into_luma8();
-    let array = to_gray_ndarray(&image, |v| v as f64);
+    let array = to_gray_ndarray(&image, f64::from);
     let [h, w] = array.shape() else {
         panic!("unexpected shape");
     };
-    println!("image size; {} {}\n", h, w);
-    to_gray_image(&array, |v| v.round().clamp(0.0, 255.0) as u8).save("original.png")?;
-    println!("saved {}", "original.png");
+    println!("image size; {h} {w}\n");
+    to_gray_image(&array, |v| v.round().clamp(0.0, 255.0).to_u8().unwrap()).save("original.png")?;
+    println!("saved original.png");
 
     // SVD
     let (u, s, vt) = array.thin_svd()?;
@@ -83,7 +80,7 @@ fn main() -> anyhow::Result<()> {
         &s,
         &BitMapBackend::new("singular_values.png", (800, 500)).into_drawing_area(),
     )?;
-    println!("saved {}", "singular_values.png");
+    println!("saved singular_values.png");
 
     // image reconstruction with different ranks
     let ranks: [usize; _] = [1, 2, 4, 8, 16, 32, 64, 128, 256];
@@ -93,9 +90,9 @@ fn main() -> anyhow::Result<()> {
         let sr = Array2::from_diag(&s.slice(s![0..r]));
         let vtr = vt.slice(s![0..r, ..]);
         let ar = ur.dot(&sr).dot(&vtr);
-        let out = format!("reconstructed_rank_{}.png", r);
-        to_gray_image(&ar, |v: &f64| v.round().clamp(0.0, 255.0) as u8).save(&out)?;
-        println!("saved {}", out);
+        let out = format!("reconstructed_rank_{r}.png");
+        to_gray_image(&ar, |v| v.round().clamp(0.0, 255.0).to_u8().unwrap()).save(&out)?;
+        println!("saved {out}");
     }
 
     Ok(())

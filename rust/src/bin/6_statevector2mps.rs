@@ -10,7 +10,7 @@ fn main() -> anyhow::Result<()> {
     let v = arr1(&[1.0, 0.0, 0.0, 1.0]) / 2f64.sqrt();
     let v = v.to_shape((2, 2))?;
     let (u, s, vt) = v.thin_svd()?;
-    println!("singular values: {}", s);
+    println!("singular values: {s}");
 
     let rank_new = s
         .iter()
@@ -20,11 +20,11 @@ fn main() -> anyhow::Result<()> {
     let s = s.slice_move(s![0..rank_new]);
     let vt = vt.slice_move(s![0..rank_new, ..]);
     let v = Array2::from_diag(&s).dot(&vt);
-    println!("tensors [{}, {}])\n", u, v);
+    println!("tensors [{u}, {v}])\n");
 
     // GHZ state
     let n: usize = 16;
-    println!("n={} GHZ state:", n);
+    println!("n={n} GHZ state:");
     let mut v = Array1::<f64>::zeros(1usize << n);
     let v_len = v.len();
     v[0] = 1.0 / 2f64.sqrt();
@@ -36,7 +36,7 @@ fn main() -> anyhow::Result<()> {
     for i in 0..(n - 1) {
         let v_view = v.to_shape((rank * 2, v.len() / (rank * 2)))?;
         let (u, s, vt) = v_view.thin_svd()?;
-        println!("{}: singular values: {}", i, s);
+        println!("{i}: singular values: {s}");
 
         let rank_new = s
             .iter()
@@ -57,14 +57,14 @@ fn main() -> anyhow::Result<()> {
     let v = v.to_shape((rank, 2))?.into_owned().into_dyn();
     mps.push(v);
     println!("tensors:[");
-    for t in mps.iter() {
-        println!("{}", t);
+    for t in &mps {
+        println!("{t}");
     }
     println!("]");
 
     // random state
     let n: usize = 16;
-    println!("n={} random state:", n);
+    println!("n={n} random state:");
     let mut v = Array1::<f64>::from_shape_fn(1usize << n, |_| rand::random::<f64>());
     v /= v.norm();
     let mut v = v.into_dyn();
@@ -74,7 +74,7 @@ fn main() -> anyhow::Result<()> {
     for i in 0..(n - 1) {
         let v_view = v.to_shape((rank * 2, v.len() / (rank * 2)))?;
         let (u, s, vt) = v_view.thin_svd()?;
-        println!("{}: singular values: {}", i, s);
+        println!("{i}: singular values: {s}");
 
         let rank_new = s
             .iter()
@@ -97,8 +97,8 @@ fn main() -> anyhow::Result<()> {
     mps.push(v);
 
     println!("virtual bond dimensions:");
-    for i in 1..n {
-        println!("{}:: {}", i, mps[i].shape()[0]);
+    for (i, ti) in mps[1..n].iter().enumerate() {
+        println!("{i}:: {}", ti.shape()[0]);
     }
 
     Ok(())

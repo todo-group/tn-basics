@@ -8,11 +8,16 @@ use tn_basics::{
     plot::{plot_error, plot_target_vs_qtt},
 };
 
+#[expect(
+    clippy::cast_precision_loss,
+    clippy::reversed_empty_ranges,
+    clippy::similar_names,
+    clippy::too_many_lines
+)]
 fn main() -> Result<()> {
     let depth: usize = 4;
     let npoints: usize = 1 << depth;
     let cutoff: f64 = 1e-10;
-    let _max_rank: usize = 4;
 
     // target function and its derivative
     let x = Array1::<f64>::linspace(0.0, 1.0, npoints);
@@ -49,7 +54,7 @@ fn main() -> Result<()> {
     let yt = yt.to_shape((rank, 2))?.into_owned().into_dyn();
     qtt.push(yt);
     print!("QTT virtual dimensions: [");
-    for t in qtt.iter() {
+    for t in &qtt {
         print!("{:?}, ", t.shape());
     }
     println!("]\n");
@@ -75,7 +80,7 @@ fn main() -> Result<()> {
     s[[1, 0, 1]] = 1.0;
     s_qtt.push(s.into_dyn());
     print!("index shift operator virtual dimensions: [");
-    for t in s_qtt.iter() {
+    for t in &s_qtt {
         print!("{:?}, ", t.shape());
     }
     println!("]\n");
@@ -83,8 +88,8 @@ fn main() -> Result<()> {
     // check for index shift operator
     if depth < 5 {
         let mut s_op = s_qtt[0].clone();
-        for k in 1..(depth - 1) {
-            s_op = einsum("ijk,klmn->iljmn", &[&s_op, &s_qtt[k]]).map_str_err()?;
+        for qtt_k in &s_qtt[1..(depth - 1)] {
+            s_op = einsum("ijk,klmn->iljmn", &[&s_op, qtt_k]).map_str_err()?;
             let shape = (
                 s_op.shape()[0] * s_op.shape()[1],
                 s_op.shape()[2] * s_op.shape()[3],
@@ -98,7 +103,7 @@ fn main() -> Result<()> {
             s_op.shape()[2] * s_op.shape()[3],
         );
         s_op = s_op.into_shape_clone(shape)?.into_dyn();
-        println!("index shift operator:\n{}\n", s_op);
+        println!("index shift operator:\n{s_op}\n");
     }
 
     // QTT for finite-difference operator
@@ -112,8 +117,7 @@ fn main() -> Result<()> {
         d.slice_mut(ndarray::s![.., .., w2..]).assign(&st);
         d_qtt.push(d.into_dyn());
     }
-    for k in 1..(depth - 1) {
-        let s = s_qtt[k].clone();
+    for s in s_qtt[1..(depth - 1)].iter().cloned() {
         let st = s.view().permuted_axes(vec![0, 2, 1, 3]).into_owned();
         let mut d = Array4::<f64>::zeros((2 * s.shape()[0], 2, 2, 2 * s.shape()[3]));
         let w0 = s.shape()[0];
@@ -135,7 +139,7 @@ fn main() -> Result<()> {
         d_qtt.push(d.into_dyn());
     }
     print!("finite-difference operator virtual dimensions: [");
-    for t in d_qtt.iter() {
+    for t in &d_qtt {
         print!("{:?}, ", t.shape());
     }
     println!("]\n");
@@ -143,8 +147,8 @@ fn main() -> Result<()> {
     // check for finite-difference operator
     if depth < 5 {
         let mut d_op = d_qtt[0].clone();
-        for k in 1..(depth - 1) {
-            d_op = einsum("ijk,klmn->iljmn", &[&d_op, &d_qtt[k]]).map_str_err()?;
+        for qtt_k in &d_qtt[1..(depth - 1)] {
+            d_op = einsum("ijk,klmn->iljmn", &[&d_op, qtt_k]).map_str_err()?;
             let shape = (
                 d_op.shape()[0] * d_op.shape()[1],
                 d_op.shape()[2] * d_op.shape()[3],
@@ -158,7 +162,7 @@ fn main() -> Result<()> {
             d_op.shape()[2] * d_op.shape()[3],
         );
         d_op = d_op.into_shape_clone(shape)?.into_dyn();
-        println!("finite-difference operator:\n{}\n", d_op);
+        println!("finite-difference operator:\n{d_op}\n");
     }
 
     // apply finite-difference operator to target function
@@ -183,15 +187,15 @@ fn main() -> Result<()> {
         dy_qtt.push(t.into_shape_clone(shape)?.into_dyn());
     }
     print!("derivative QTT virtual dimensions: [");
-    for t in dy_qtt.iter() {
+    for t in &dy_qtt {
         print!("{:?}, ", t.shape());
     }
     println!("]\n");
 
     // reconstruction
     let mut dyr = dy_qtt[0].clone();
-    for k in 1..(depth - 1) {
-        let tmp = einsum("ij,jkl->ikl", &[&dyr, &dy_qtt[k]]).map_str_err()?;
+    for qtt_k in &dy_qtt[1..(depth - 1)] {
+        let tmp = einsum("ij,jkl->ikl", &[&dyr, qtt_k]).map_str_err()?;
         let shape = (tmp.shape()[0] * tmp.shape()[1], tmp.shape()[2]);
         dyr = tmp.into_shape_clone(shape)?.into_dyn();
     }
@@ -204,8 +208,8 @@ fn main() -> Result<()> {
     let dyr = dyr.slice_move(ndarray::s![1..-2]);
 
     if depth < 5 {
-        println!("target derivative y' = {}\n", dy);
-        println!("QTT derivative    y' = {}\n", dyr);
+        println!("target derivative y' = {dy}\n");
+        println!("QTT derivative    y' = {dyr}\n");
     }
     println!("error = {}\n", (&dyr - &dy).norm() / npoints as f64);
 
@@ -217,14 +221,14 @@ fn main() -> Result<()> {
         &dy,
         &dyr,
     )?;
-    println!("Saved plot: {}", "target_vs_qtt_d.png");
+    println!("Saved plot: target_vs_qtt_d.png");
     plot_error(
         &BitMapBackend::new("error_d.png", (1000, 600)).into_drawing_area(),
         &x,
         &dy,
         &dyr,
     )?;
-    println!("Saved plot: {}", "error_d.png");
+    println!("Saved plot: error_d.png");
 
     Ok(())
 }

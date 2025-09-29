@@ -1,13 +1,13 @@
 // (Simplified) TEBD simulation of random quantum circuits
 
+use core::f64::consts::PI;
+
 use anyhow::Result;
-use ndarray::{Array, Array1, Array2, Array3, Array4, ArrayD, Axis, Ix2, array, s};
+use ndarray::{Array1, Array3, array};
 use ndarray_einsum::einsum;
-use ndarray_linalg::Norm;
 use num_complex::Complex64 as C64;
 use rand::Rng;
-use rand::distributions::{Distribution, Uniform};
-use tn_basics::{EasySVD, MapStrToAnyhowErr};
+use tn_basics::MapStrToAnyhowErr;
 
 fn iexp(theta: f64) -> C64 {
     C64::new(theta.cos(), theta.sin())
@@ -107,18 +107,6 @@ fn iexp(theta: f64) -> C64 {
 fn main() -> Result<()> {
     let n: usize = 16;
     let depth: usize = 16;
-    let max_dim: usize = 4;
-    let cutoff: f64 = 1e-10;
-
-    // two-qubit gate: CNOT
-    let cnot: Array4<C64> = array![
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0, 0.0]
-    ]
-    .mapv(|x: f64| C64::from(x))
-    .into_shape_with_order((2, 2, 2, 2))?;
 
     // state vector |0...0>
     let mut state = Array1::<C64>::zeros([1usize << n]);
@@ -130,24 +118,22 @@ fn main() -> Result<()> {
         .map(|_| array![[[1.0.into()], [0.0.into()]]])
         .collect();
     print!("mps0/1 initial virtual bond dimensions: [",);
-    for i in 0..n {
-        print!("{}, ", mps0[i].shape()[2]);
+    for mps_i in &mps0 {
+        print!("{}, ", mps_i.shape()[2]);
     }
     println!("]\n");
 
     // MPS |0...0> with truncation
     let mut mps1 = mps0.clone();
 
-    let mut rng = rand::thread_rng();
-    let uniform_2pi = Uniform::new(0.0, 2.0 * std::f64::consts::PI);
-    let uniform_pi = Uniform::new(0.0, std::f64::consts::PI);
+    let mut rng = rand::rng();
 
     for k in 0..depth {
         // random single-qubit rotations
         for pos in 0..n {
-            let alpha = uniform_2pi.sample(&mut rng);
-            let theta = uniform_pi.sample(&mut rng);
-            let phi = uniform_2pi.sample(&mut rng);
+            let alpha = rng.random_range(0.0..2.0 * PI);
+            let theta = rng.random_range(0.0..PI);
+            let phi = rng.random_range(0.0..2.0 * PI);
 
             let u = iexp(alpha)
                 * array![
@@ -197,8 +183,8 @@ fn main() -> Result<()> {
             .clone()
             .into_shape_with_order((s0 * s1, s2))?
             .to_owned();
-        for i in 1..n {
-            let state = einsum("ij,jkl->ikl", &[&state0, &mps0[i]]).unwrap();
+        for mps_i in &mps0[1..n] {
+            let state = einsum("ij,jkl->ikl", &[&state0, mps_i]).unwrap();
             let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
             state0 = state.into_shape_clone(shape)?;
         }
@@ -209,8 +195,8 @@ fn main() -> Result<()> {
             .clone()
             .into_shape_with_order((s0 * s1, s2))?
             .to_owned();
-        for i in 1..n {
-            let state = einsum("ij,jkl->ikl", &[&state1, &mps1[i]]).unwrap();
+        for mps_i in &mps1[1..n] {
+            let state = einsum("ij,jkl->ikl", &[&state1, mps_i]).unwrap();
             let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
             state1 = state.into_shape_clone(shape)?;
         }
@@ -227,13 +213,13 @@ fn main() -> Result<()> {
     }
 
     print!("mps0 final virtual bond dimensions: [",);
-    for i in 0..n {
-        print!("{}, ", mps0[i].shape()[2]);
+    for mps_i in &mps0 {
+        print!("{}, ", mps_i.shape()[2]);
     }
     println!("]\n");
     print!("mps1 final virtual bond dimensions: [",);
-    for i in 0..n {
-        print!("{}, ", mps1[i].shape()[2]);
+    for mps_i in &mps1 {
+        print!("{}, ", mps_i.shape()[2]);
     }
     println!("]\n");
     Ok(())

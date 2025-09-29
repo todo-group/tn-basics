@@ -3,8 +3,6 @@ use ndarray_einsum::einsum;
 use rand::random;
 use tn_basics::MapStrToAnyhowErr;
 
-extern crate blas_src;
-
 // Tensor contraction examples
 
 fn main() -> anyhow::Result<()> {

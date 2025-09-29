@@ -1,7 +1,6 @@
 pub mod plot;
 
-use ndarray::s;
-use ndarray::{Array1, Array2, ArrayBase, Data, Ix2};
+use ndarray::{Array1, Array2, ArrayBase, Data, Ix2, s};
 use ndarray_linalg::{Lapack, SVD, Scalar, error::LinalgError};
 
 // unfortunaletely, ndarray-linalg does not provide thin_svd function, though internally it appears to have options for thin svd.
@@ -12,7 +11,17 @@ pub trait EasySVD {
     type U;
     type VT;
     type Sigma;
+    /// Performs thin SVD.
+    ///
+    /// # Errors
+    /// If underlying `.svd` call fails.
+    #[expect(clippy::type_complexity)]
     fn thin_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError>;
+    /// Performs full SVD.
+    ///
+    /// # Errors
+    /// If underlying `.svd` call fails.
+    #[expect(clippy::type_complexity)]
     fn full_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError>;
 }
 
@@ -45,6 +54,7 @@ where
 
 pub trait MapStrToAnyhowErr {
     type Ok;
+    #[expect(clippy::missing_errors_doc)]
     fn map_str_err(self) -> Result<Self::Ok, anyhow::Error>;
 }
 

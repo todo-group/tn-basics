@@ -2,6 +2,7 @@ use ndarray::{ArrayBase, Data, Ix1};
 use plotters::{coord::Shift, prelude::*};
 
 /// Plot y (target) and yr (qtt approximation) vs x
+#[expect(clippy::missing_panics_doc, clippy::missing_errors_doc)]
 pub fn plot_target_vs_qtt<DB: DrawingBackend>(
     area: &DrawingArea<DB, Shift>,
     x: &ArrayBase<impl Data<Elem = f64>, Ix1>,
@@ -24,7 +25,7 @@ pub fn plot_target_vs_qtt<DB: DrawingBackend>(
         .max_by(|a, b| a.partial_cmp(b).unwrap())
         .unwrap();
 
-    let mut chart = ChartBuilder::on(&area)
+    let mut chart = ChartBuilder::on(area)
         .caption("Target vs QTT", ("sans-serif", 30).into_font())
         .margin(10)
         .x_label_area_size(40)
@@ -40,7 +41,7 @@ pub fn plot_target_vs_qtt<DB: DrawingBackend>(
             &RED,
         ))?
         .label("target")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 10, y)], &RED));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 10, y)], RED));
 
     // draw QTT points (either full or subsampled)
     let npoints = x.len();
@@ -52,7 +53,7 @@ pub fn plot_target_vs_qtt<DB: DrawingBackend>(
                     .map(|(xi, yi)| Circle::new((*xi, *yi), 3, ShapeStyle::from(&BLUE).filled())),
             )?
             .label("QTT")
-            .legend(|(x, y)| Circle::new((x, y), 3, &BLUE));
+            .legend(|(x, y)| Circle::new((x, y), 3, BLUE));
     } else {
         let stride = npoints / 32;
         chart
@@ -69,13 +70,13 @@ pub fn plot_target_vs_qtt<DB: DrawingBackend>(
                     }),
             )?
             .label("QTT")
-            .legend(|(x, y)| Circle::new((x, y), 3, &BLUE));
+            .legend(|(x, y)| Circle::new((x, y), 3, BLUE));
     }
 
     chart
         .configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
+        .background_style(WHITE.mix(0.8))
+        .border_style(BLACK)
         .draw()?;
 
     // present (write file)
@@ -83,6 +84,7 @@ pub fn plot_target_vs_qtt<DB: DrawingBackend>(
 }
 
 /// Plot the error = y - yr vs x
+#[expect(clippy::missing_panics_doc, clippy::missing_errors_doc)]
 pub fn plot_error<DB: DrawingBackend>(
     area: &DrawingArea<DB, Shift>,
     x: &ArrayBase<impl Data<Elem = f64>, Ix1>,
@@ -110,7 +112,7 @@ pub fn plot_error<DB: DrawingBackend>(
         .max_by(|a, b| a.partial_cmp(b).unwrap())
         .unwrap();
 
-    let mut chart = ChartBuilder::on(&area)
+    let mut chart = ChartBuilder::on(area)
         .caption("Error", ("sans-serif", 30).into_font())
         .margin(10)
         .x_label_area_size(40)
@@ -120,7 +122,7 @@ pub fn plot_error<DB: DrawingBackend>(
     chart
         .configure_mesh()
         .disable_mesh()
-        .y_label_formatter(&|y| format!("{:.2e}", y))
+        .y_label_formatter(&|y| format!("{y:.2e}"))
         .draw()?;
 
     chart
@@ -129,12 +131,12 @@ pub fn plot_error<DB: DrawingBackend>(
             &BLACK,
         ))?
         .label("error")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 10, y)], &BLACK));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 10, y)], BLACK));
 
     chart
         .configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
+        .background_style(WHITE.mix(0.8))
+        .border_style(BLACK)
         .draw()?;
 
     Ok(())
