@@ -2,7 +2,6 @@
 
 use core::f64::consts::PI;
 
-use anyhow::Result;
 use ndarray::{Array1, Array3, array};
 use ndarray_einsum::einsum;
 use num_complex::Complex64 as C64;
@@ -104,7 +103,7 @@ fn iexp(theta: f64) -> C64 {
 //     (left, right)
 // }
 
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     let n: usize = 16;
     let depth: usize = 16;
 
@@ -184,7 +183,7 @@ fn main() -> Result<()> {
             .into_shape_with_order((s0 * s1, s2))?
             .to_owned();
         for mps_i in &mps0[1..n] {
-            let state = einsum("ij,jkl->ikl", &[&state0, mps_i]).unwrap();
+            let state = einsum("ij,jkl->ikl", &[&state0, mps_i]).map_str_err()?;
             let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
             state0 = state.into_shape_clone(shape)?;
         }
@@ -196,7 +195,7 @@ fn main() -> Result<()> {
             .into_shape_with_order((s0 * s1, s2))?
             .to_owned();
         for mps_i in &mps1[1..n] {
-            let state = einsum("ij,jkl->ikl", &[&state1, mps_i]).unwrap();
+            let state = einsum("ij,jkl->ikl", &[&state1, mps_i]).map_str_err()?;
             let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
             state1 = state.into_shape_clone(shape)?;
         }

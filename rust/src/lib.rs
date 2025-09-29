@@ -55,12 +55,12 @@ where
 pub trait MapStrToAnyhowErr {
     type Ok;
     #[expect(clippy::missing_errors_doc)]
-    fn map_str_err(self) -> Result<Self::Ok, anyhow::Error>;
+    fn map_str_err(self) -> anyhow::Result<Self::Ok>;
 }
 
 impl<T> MapStrToAnyhowErr for Result<T, &'static str> {
     type Ok = T;
-    fn map_str_err(self) -> Result<<Self as MapStrToAnyhowErr>::Ok, anyhow::Error> {
+    fn map_str_err(self) -> anyhow::Result<<Self as MapStrToAnyhowErr>::Ok> {
         self.map_err(|e| anyhow::anyhow!(e))
     }
 }

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use ndarray::{Array1, Array2, Array3, Array4, ArrayD, s};
 use ndarray_einsum::einsum;
 use ndarray_linalg::Norm;
@@ -14,7 +13,7 @@ use tn_basics::{
     clippy::similar_names,
     clippy::too_many_lines
 )]
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     let depth: usize = 4;
     let npoints: usize = 1 << depth;
     let cutoff: f64 = 1e-10;

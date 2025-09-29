@@ -1,4 +1,3 @@
-use anyhow::Result;
 use ndarray::{Array1, Array2, ArrayD, s};
 use ndarray_einsum::einsum;
 use ndarray_linalg::Norm;
@@ -9,7 +8,7 @@ use tn_basics::{
 };
 
 #[expect(clippy::cast_precision_loss)]
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     let depth: usize = 4;
     let npoints: usize = 1 << depth;
     let cutoff: f64 = 1e-10;
