@@ -15,6 +15,15 @@ rand = "0.8"
 anyhow = "1.0.100"
 num-complex = "0.4"
 
+[lints.rust]
+rust_2018_compatibility = "deny"
+rust_2018_idioms = "deny"
+rust_2021_compatibility = "deny"
+rust_2024_compatibility = "deny"
+
+[lints.clippy]
+pedantic = "warn"
+
 [[bin]]
 name = "1_svd"
 
