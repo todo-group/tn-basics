@@ -8,6 +8,8 @@ use tn_basics::{
     plot::{plot_error, plot_target_vs_qtt},
 };
 
+// QTT representation of finite-difference operator
+
 fn main() -> Result<()> {
     let depth: usize = 4;
     let npoints: usize = 1 << depth;

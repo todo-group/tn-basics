@@ -8,6 +8,8 @@ use tn_basics::{
     plot::{plot_error, plot_target_vs_qtt},
 };
 
+// Conversion of one-dimensional function into QTT representation
+
 fn main() -> Result<()> {
     let depth: usize = 4;
     let npoints: usize = 1 << depth;
@@ -85,12 +87,14 @@ fn main() -> Result<()> {
         &y,
         &yr,
     )?;
+    println!("Saved plot: {}", "target_vs_qtt.png");
     plot_error(
         &BitMapBackend::new("error.png", (800, 600)).into_drawing_area(),
         &x,
         &y,
         &yr,
     )?;
+    println!("Saved plot: {}", "error.png");
 
     Ok(())
 }

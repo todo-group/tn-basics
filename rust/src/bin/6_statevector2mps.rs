@@ -1,6 +1,8 @@
 use ndarray::{Array1, Array2, ArrayD, arr1, s};
 use ndarray_linalg::Norm;
-use tn_basics::EasySVD; // A = U * diag(S) * Vt
+use tn_basics::EasySVD;
+
+// Generate MPS from statevector
 
 fn main() -> anyhow::Result<()> {
     let cutoff = 1e-10_f64;
