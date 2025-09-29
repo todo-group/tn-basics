@@ -1,124 +1,44 @@
-// (Simplified) TEBD simulation of random quantum circuits
-
-use core::f64::consts::PI;
-
-use ndarray::{Array1, Array3, array};
+use anyhow::Result;
+use ndarray::{Array1, Array2, Array3, Array4, Ix3, Ix4, Ix5, array, s};
 use ndarray_einsum::einsum;
 use num_complex::Complex64 as C64;
 use rand::Rng;
-use tn_basics::MapStrToAnyhowErr;
+use std::f64::consts::PI;
+use tn_basics::{EasySVD, MapStrToAnyhowErr};
 
 fn iexp(theta: f64) -> C64 {
     C64::new(theta.cos(), theta.sin())
 }
 
-// // fn random_u(rng: &mut impl Rng) -> Array2<C64> {
-// // }
+// (Simplified) TEBD simulation of random quantum circuits
 
-// // 全状態テンソル state(2,2,...,2) に pos(0-indexed) の1量子ゲートUを適用
-// fn apply_1q(state: &mut ArrayD<C64>, pos: usize, u: &Array2<C64>) {
-//     let n = state.ndim();
-//     let mut order: Vec<usize> = (0..n).collect();
-//     order.swap(0, pos);
-//     let inv = {
-//         let mut inv = vec![0; n];
-//         for (i, &o) in order.iter().enumerate() {
-//             inv[o] = i;
-//         }
-//         inv
-//     };
-//     let st = state.view().permuted_axes(order);
-//     let mut st2 = st.to_shared().into_shape((2, st.len() / 2)).unwrap();
-//     st2 = u.dot(&st2);
-//     let st_back = st2.into_shape(st.raw_dim()).unwrap();
-//     *state = st_back.permuted_axes(inv).to_shared().into_dyn();
-// }
-
-// // state に CNOT(2,2,2,2) を pos,pos+1 に適用
-// fn apply_2q(state: &mut ArrayD<C64>, pos: usize, g: &Array4) {
-//     let n = state.ndim();
-//     let mut order: Vec<usize> = (0..n).collect();
-//     order.swap(0, pos);
-//     order.swap(1, pos + 1);
-//     let inv = {
-//         let mut inv = vec![0; n];
-//         for (i, &o) in order.iter().enumerate() {
-//             inv[o] = i;
-//         }
-//         inv
-//     };
-//     let st = state.view().permuted_axes(order);
-//     let mut st2 = st.to_shared().into_shape((2, 2, st.len() / 4)).unwrap();
-//     let tmp: Array3<C64> = einsum("abxy,xyc->abc", &[g, &st2]).unwrap();
-//     let st_back = tmp.into_shape(st.raw_dim()).unwrap();
-//     *state = st_back.permuted_axes(inv).to_shared().into_dyn();
-// }
-
-// fn mps_two_site_update(
-//     mps_left: &Array3<C64>,
-//     mps_right: &Array3<C64>,
-//     g: &Array4<C64>,
-//     cutoff: f64,
-//     chi_max: usize,
-// ) -> (Array3<C64>, Array3<C64>) {
-//     // T[χl,i1,i2,χr] = G[i1,i2,j1,j2] A[χl,j1,α] B[α,j2,χr]
-//     let t: ndarray::Array4<C64> =
-//         einsum("i1i2j1j2,lj1a,aj2r->li1i2r", &[g, mps_left, mps_right]).unwrap();
-//     let (χl, _, _, χr) = (t.shape()[0], t.shape()[1], t.shape()[2], t.shape()[3]);
-//     let tmat = t.into_shape((χl * 2, 2 * χr)).unwrap();
-
-//     let (u, s, vt) = tmat.thin_svd().unwrap();
-
-//     let mut r = 0usize;
-//     for &sv in s.iter() {
-//         if sv.re > cutoff {
-//             r += 1;
-//         } else {
-//             break;
-//         }
-//         if r == chi_max {
-//             break;
-//         }
-//     }
-//     if r == 0 {
-//         return (
-//             Array3::<C64>::zeros((χl, 2, 1)),
-//             Array3::<C64>::zeros((1, 2, χr)),
-//         );
-//     }
-//     let s_keep = s.slice(s![0..r]).to_owned();
-//     u = u.slice(s![.., 0..r]).to_owned();
-//     vt = vt.slice(s![0..r, ..]).to_owned();
-
-//     // Anew = U * sqrt(S),  Bnew = sqrt(S) * Vt
-//     let mut s_sqrt = Array2::<C64>::zeros((r, r));
-//     for i in 0..r {
-//         s_sqrt[(i, i)] = C64::new(s_keep[i].re.sqrt(), 0.0);
-//     }
-//     let anew = u.dot(&s_sqrt);
-//     let bnew = s_sqrt.dot(&vt);
-
-//     let left = anew.into_shape((χl, 2, r)).unwrap();
-//     let right = bnew.into_shape((r, 2, χr)).unwrap();
-//     (left, right)
-// }
-
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     let n: usize = 16;
     let depth: usize = 16;
+    let max_dim: usize = 4;
+    let cutoff: f64 = 1e-10;
+
+    // two-qubit gate: CNOT
+    let cnot: Array4<C64> = array![
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0, 0.0]
+    ]
+    .mapv(|x: f64| C64::from(x))
+    .into_shape_with_order((2, 2, 2, 2))?;
 
     // state vector |0...0>
     let mut state = Array1::<C64>::zeros([1usize << n]);
     state[0] = 1.0.into();
-    //let state = state.into_shape_with_order(vec![2; n])?;
 
     // MPS |0...0> without truncation
     let mut mps0: Vec<Array3<C64>> = (0..n)
         .map(|_| array![[[1.0.into()], [0.0.into()]]])
         .collect();
     print!("mps0/1 initial virtual bond dimensions: [",);
-    for mps_i in &mps0 {
-        print!("{}, ", mps_i.shape()[2]);
+    for i in 0..(n - 1) {
+        print!("{}, ", mps0[i].dim().2);
     }
     println!("]\n");
 
@@ -146,58 +66,105 @@ fn main() -> anyhow::Result<()> {
                     ]
                 ];
 
-            // due to ndarray_einsum limitation, we apply gate by coonverting vector into fixed shape tensor
-            let state_3d = state.to_shape((1usize << pos, 2, 1usize << (n - pos - 1)))?;
-            let state_3d = einsum("ij,kjm->kim", &[&u, &state_3d]).map_str_err()?;
-            state = state_3d.flatten().into_owned();
-
-            let sub0 = einsum("ij,kjm->kim", &[&u, &mps0[pos]]).map_str_err()?;
-            let [s0, s1, s2] = *sub0.shape() else {
-                panic!("unexpected shape")
-            };
-            mps0[pos] = sub0.into_shape_with_order((s0, s1, s2))?;
-            let sub1 = einsum("ij,kjm->kim", &[&u, &mps1[pos]]).map_str_err()?;
-            let [s0, s1, s2] = *sub1.shape() else {
-                panic!("unexpected shape")
-            };
-            mps1[pos] = sub1.into_shape_with_order((s0, s1, s2))?;
+            {
+                // due to ndarray_einsum limitation, we apply gate by coonverting vector into fixed shape tensor
+                let state_3d =
+                    state.into_shape_with_order((1usize << pos, 2, 1usize << (n - pos - 1)))?;
+                let state_3d = einsum("ij,kjm->kim", &[&u, &state_3d])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix3>()?;
+                state = state_3d.flatten().into_owned();
+            }
+            {
+                mps0[pos] = einsum("ij,kjm->kim", &[&u, &mps0[pos]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix3>()?;
+            }
+            {
+                mps1[pos] = einsum("ij,kjm->kim", &[&u, &mps1[pos]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix3>()?;
+            }
         }
 
         // cnot gates
-        // for i in ((k / 2)..(n - 1)).step_by(2) {
-        //     // due to ndarray_einsum limitation, we apply gate by coonverting vector into fixed shape tensor
-        //     apply_2q(&mut state, i, &cnot);
-        //     // no trunc
-        //     let (l0, r0) = mps_two_site_update(&mps0[i], &mps0[i + 1], &cnot, cutoff, usize::MAX);
-        //     mps0[i] = l0;
-        //     mps0[i + 1] = r0;
-        //     // trunc
-        //     let (l1, r1) = mps_two_site_update(&mps1[i], &mps1[i + 1], &cnot, cutoff, max_dim);
-        //     mps1[i] = l1;
-        //     mps1[i + 1] = r1;
-        // }
+        for i in ((k / 2)..(n - 1)).step_by(2) {
+            {
+                // due to ndarray_einsum limitation, we apply gate by coonverting vector into fixed shape tensor
+                let state_4d = state.to_shape((1usize << i, 2, 2, 1usize << (n - i - 2)))?;
+                let state_4d = einsum("ijkl,mkln->mijn", &[&cnot, &state_4d])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix4>()?;
+                state = state_4d.flatten().into_owned();
+            }
+            {
+                let sub0 = einsum("ijkl,mkn->mijln", &[&cnot, &mps0[i]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix5>()?;
+                let sub0 = einsum("ijklm,mln->ijkn", &[&sub0, &mps0[i + 1]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix4>()?;
+                let shape = sub0.dim();
+                let tmat = sub0.to_shape((shape.0 * shape.1, shape.2 * shape.3))?;
+                let (u, s, vt) = tmat.thin_svd()?;
+                let rank_new = s
+                    .iter()
+                    .position(|&x| x <= cutoff * s[0])
+                    .unwrap_or(s.len());
+                let s = s.slice(s![0..rank_new]);
+                let smat = Array2::from_diag(&s.mapv(|x| C64::from(x.sqrt())));
+                mps0[i] = (u.slice(s![.., 0..rank_new]))
+                    .dot(&smat)
+                    .into_shape_clone((shape.0, shape.1, rank_new))?;
+                mps0[i + 1] = smat
+                    .dot(&(vt.slice(s![0..rank_new, ..])))
+                    .into_shape_clone((rank_new, shape.2, shape.3))?;
+            }
+            {
+                let sub1 = einsum("ijkl,mkn->mijln", &[&cnot, &mps1[i]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix5>()?;
+                let sub1 = einsum("ijklm,mln->ijkn", &[&sub1, &mps1[i + 1]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix4>()?;
+                let shape = sub1.dim();
+                let tmat = sub1.to_shape((shape.0 * shape.1, shape.2 * shape.3))?;
+                let (u, s, vt) = tmat.thin_svd()?;
+                let rank_new = s
+                    .iter()
+                    .position(|&x| x <= cutoff * s[0])
+                    .unwrap_or(s.len())
+                    .min(max_dim);
+                let s = s.slice(s![0..rank_new]);
+                let smat = Array2::from_diag(&s.mapv(|x| C64::from(x.sqrt())));
+                mps1[i] = (u.slice(s![.., 0..rank_new]))
+                    .dot(&smat)
+                    .into_shape_clone((shape.0, shape.1, rank_new))?;
+                mps1[i + 1] = smat
+                    .dot(&(vt.slice(s![0..rank_new, ..])))
+                    .into_shape_clone((rank_new, shape.2, shape.3))?;
+            }
+        }
 
-        let (s0, s1, s2) = mps0[0].dim();
-        let mut state0 = mps0[0]
-            .clone()
-            .into_shape_with_order((s0 * s1, s2))?
-            .to_owned();
-        for mps_i in &mps0[1..n] {
-            let state = einsum("ij,jkl->ikl", &[&state0, mps_i]).map_str_err()?;
-            let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
-            state0 = state.into_shape_clone(shape)?;
+        let shape = mps0[0].dim();
+        let mut state0 = mps0[0].to_shape((shape.0 * shape.1, shape.2))?.to_owned();
+        for i in 1..n {
+            let state = einsum("ij,jkl->ikl", &[&state0, &mps0[i]])
+                .map_str_err()?
+                .into_dimensionality::<Ix3>()?;
+            let shape = state.dim();
+            state0 = state.into_shape_clone((shape.0 * shape.1, shape.2))?;
         }
         let state0 = state0.flatten();
 
-        let (s0, s1, s2) = mps1[0].dim();
-        let mut state1 = mps1[0]
-            .clone()
-            .into_shape_with_order((s0 * s1, s2))?
-            .to_owned();
-        for mps_i in &mps1[1..n] {
-            let state = einsum("ij,jkl->ikl", &[&state1, mps_i]).map_str_err()?;
-            let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
-            state1 = state.into_shape_clone(shape)?;
+        let shape = mps1[0].dim();
+        let mut state1 = mps1[0].to_shape((shape.0 * shape.1, shape.2))?.to_owned();
+        for i in 1..n {
+            let state = einsum("ij,jkl->ikl", &[&state1, &mps1[i]])
+                .map_str_err()?
+                .into_dimensionality::<Ix3>()?;
+            let shape = state.dim();
+            state1 = state.into_shape_clone((shape.0 * shape.1, shape.2))?;
         }
         let state1 = state1.flatten();
 
@@ -212,13 +179,13 @@ fn main() -> anyhow::Result<()> {
     }
 
     print!("mps0 final virtual bond dimensions: [",);
-    for mps_i in &mps0 {
-        print!("{}, ", mps_i.shape()[2]);
+    for i in 0..(n - 1) {
+        print!("{}, ", mps0[i].shape()[2]);
     }
     println!("]\n");
     print!("mps1 final virtual bond dimensions: [",);
-    for mps_i in &mps1 {
-        print!("{}, ", mps_i.shape()[2]);
+    for i in 0..(n - 1) {
+        print!("{}, ", mps1[i].shape()[2]);
     }
     println!("]\n");
     Ok(())
