@@ -23,30 +23,3 @@ rust_2024_compatibility = "deny"
 
 [lints.clippy]
 pedantic = "warn"
-
-[[bin]]
-name = "1_svd"
-
-[[bin]]
-name = "2_image-compression"
-
-[[bin]]
-name = "3_tensor"
-
-[[bin]]
-name = "4_contraction"
-
-[[bin]]
-name = "5_mps2statevector"
-
-[[bin]]
-name = "6_statevector2mps"
-
-[[bin]]
-name = "7_tebd"
-
-[[bin]]
-name = "8_function2qtt"
-
-[[bin]]
-name = "9_finite-difference"
