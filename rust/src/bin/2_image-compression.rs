@@ -56,6 +56,7 @@ fn plot_singular_values<S: Data<Elem = f64>, DB: DrawingBackend>(
         .draw()?;
 
     chart.draw_series(LineSeries::new((0..s.len()).map(|i| (i, s[i])), &BLUE))?;
+    area.present()?;
     Ok(())
 }
 
@@ -66,13 +67,11 @@ fn main() -> anyhow::Result<()> {
 
     // load image and convert to grayscale
     let image = ImageReader::open(path)?.decode()?.into_luma8();
-    let array = to_gray_ndarray(&image, f64::from);
-    let [h, w] = array.shape() else {
-        panic!("unexpected shape");
-    };
-    println!("image size; {h} {w}\n");
-    to_gray_image(&array, |v| v.round().clamp(0.0, 255.0).to_u8().unwrap()).save("original.png")?;
-    println!("saved original.png");
+    let array = to_gray_ndarray(&image, |v| v as f64);
+    let (h, w) = array.dim();
+    println!("image size; {} {}\n", h, w);
+    to_gray_image(&array, |v| v.round().clamp(0.0, 255.0) as u8).save("original.png")?;
+    println!("saved {}", "original.png");
 
     // SVD
     let (u, s, vt) = array.thin_svd()?;

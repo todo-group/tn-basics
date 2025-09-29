@@ -1,4 +1,5 @@
-use ndarray::{Array1, Array2, Array3, Array4, ArrayD, s};
+use anyhow::Result;
+use ndarray::{Array1, Array2, Array3, Array4, ArrayD, Ix2, Ix3, Ix4, Ix5, s};
 use ndarray_einsum::einsum;
 use ndarray_linalg::Norm;
 use plotters::prelude::{BitMapBackend, IntoDrawingArea};
@@ -7,13 +8,9 @@ use tn_basics::{
     plot::{plot_error, plot_target_vs_qtt},
 };
 
-#[expect(
-    clippy::cast_precision_loss,
-    clippy::reversed_empty_ranges,
-    clippy::similar_names,
-    clippy::too_many_lines
-)]
-fn main() -> anyhow::Result<()> {
+// QTT representation of finite-difference operator
+
+fn main() -> Result<()> {
     let depth: usize = 4;
     let npoints: usize = 1 << depth;
     let cutoff: f64 = 1e-10;
@@ -28,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     // let dy = -2.0 * (&x - 0.5) * &y / (0.1f64.powi(2));
 
     // QTT decomposition of target function
-    let mut yt = y.clone().into_dyn();
+    let mut yt = y.clone().into_shape_with_order((1, y.len()))?;
     let mut qtt: Vec<ArrayD<f64>> = Vec::with_capacity(depth);
     let mut rank: usize = 1;
     for k in 0..(depth - 1) {
@@ -38,20 +35,20 @@ fn main() -> anyhow::Result<()> {
             .iter()
             .position(|&x| x <= cutoff * s[0])
             .unwrap_or(s.len());
-        let u = u.slice_move(s![.., 0..rank_new]);
-        let s = s.slice_move(s![0..rank_new]);
-        let vt = vt.slice_move(s![0..rank_new, ..]);
+        let u = u.slice(s![.., 0..rank_new]);
+        let s = s.slice(s![0..rank_new]);
+        let vt = vt.slice(s![0..rank_new, ..]);
         let u = if k > 0 {
             u.to_shape((rank, 2, rank_new))?.into_owned().into_dyn()
         } else {
-            u.into_dyn()
+            u.into_owned().into_dyn()
         };
         qtt.push(u);
-        yt = Array2::from_diag(&s).dot(&vt).into_dyn();
+        yt = Array2::from_diag(&s).dot(&vt);
         rank = rank_new;
     }
-    let yt = yt.to_shape((rank, 2))?.into_owned().into_dyn();
-    qtt.push(yt);
+    let yt = yt.into_shape_clone((rank, 2))?;
+    qtt.push(yt.into_dyn());
     print!("QTT virtual dimensions: [");
     for t in &qtt {
         print!("{:?}, ", t.shape());
@@ -86,42 +83,39 @@ fn main() -> anyhow::Result<()> {
 
     // check for index shift operator
     if depth < 5 {
-        let mut s_op = s_qtt[0].clone();
-        for qtt_k in &s_qtt[1..(depth - 1)] {
-            s_op = einsum("ijk,klmn->iljmn", &[&s_op, qtt_k]).map_str_err()?;
-            let shape = (
-                s_op.shape()[0] * s_op.shape()[1],
-                s_op.shape()[2] * s_op.shape()[3],
-                s_op.shape()[4],
-            );
-            s_op = s_op.into_shape_clone(shape)?.into_dyn();
+        let mut s_op = s_qtt[0].clone().into_dimensionality::<Ix3>()?;
+        for k in 1..(depth - 1) {
+            let tmp = einsum("ijk,klmn->iljmn", &[&s_op, &s_qtt[k]])
+                .map_str_err()?
+                .into_dimensionality::<Ix5>()?;
+            let shape = tmp.dim();
+            s_op = tmp.into_shape_clone((shape.0 * shape.1, shape.2 * shape.3, shape.4))?;
         }
-        s_op = einsum("ijk,klm->iljm", &[&s_op, &s_qtt[depth - 1]]).map_str_err()?;
-        let shape = (
-            s_op.shape()[0] * s_op.shape()[1],
-            s_op.shape()[2] * s_op.shape()[3],
-        );
-        s_op = s_op.into_shape_clone(shape)?.into_dyn();
-        println!("index shift operator:\n{s_op}\n");
+        let s_op = einsum("ijk,klm->iljm", &[&s_op, &s_qtt[depth - 1]])
+            .map_str_err()?
+            .into_dimensionality::<Ix4>()?;
+        let shape = s_op.dim();
+        let s_op = s_op.into_shape_clone((shape.0 * shape.1, shape.2 * shape.3))?;
+        println!("index shift operator:\n{}\n", s_op);
     }
 
     // QTT for finite-difference operator
     let mut d_qtt: Vec<ArrayD<f64>> = Vec::with_capacity(depth);
     {
-        let s = s_qtt[0].clone();
-        let st = s.view().permuted_axes(vec![1, 0, 2]).into_owned();
-        let mut d = Array3::<f64>::zeros((2, 2, 2 * s.shape()[2]));
+        let s = s_qtt[0].clone().into_dimensionality::<Ix3>()?;
+        let st = s.view().permuted_axes([1, 0, 2]).into_owned();
         let w2 = s.shape()[2];
+        let mut d = Array3::<f64>::zeros((2, 2, 2 * w2));
         d.slice_mut(ndarray::s![.., .., ..w2]).assign(&(-s));
         d.slice_mut(ndarray::s![.., .., w2..]).assign(&st);
         d_qtt.push(d.into_dyn());
     }
-    for s in s_qtt[1..(depth - 1)].iter().cloned() {
-        let st = s.view().permuted_axes(vec![0, 2, 1, 3]).into_owned();
-        let mut d = Array4::<f64>::zeros((2 * s.shape()[0], 2, 2, 2 * s.shape()[3]));
+    for k in 1..(depth - 1) {
+        let s = s_qtt[k].clone().into_dimensionality::<Ix4>()?;
+        let st = s.view().permuted_axes([0, 2, 1, 3]).into_owned();
         let w0 = s.shape()[0];
         let w3 = s.shape()[3];
-
+        let mut d = Array4::<f64>::zeros((2 * w0, 2, 2, 2 * w3));
         d.slice_mut(ndarray::s![0..w0, .., .., 0..w3])
             .assign(&(2.0 * s));
         d.slice_mut(ndarray::s![w0.., .., .., w3..])
@@ -129,10 +123,11 @@ fn main() -> anyhow::Result<()> {
         d_qtt.push(d.into_dyn());
     }
     {
-        let s = s_qtt[depth - 1].clone();
-        let st = s.view().permuted_axes(vec![0, 2, 1]).into_owned();
-        let mut d = Array3::<f64>::zeros((2 * s.shape()[2], 2, 2));
+        let s = s_qtt[depth - 1].clone().into_dimensionality::<Ix3>()?;
+        let st = s.view().permuted_axes([0, 2, 1]).into_owned();
         let w2 = s.shape()[2];
+        let mut d = Array3::<f64>::zeros((2 * w2, 2, 2));
+
         d.slice_mut(ndarray::s![..w2, .., ..]).assign(&(2.0 * s));
         d.slice_mut(ndarray::s![w2.., .., ..]).assign(&(2.0 * st));
         d_qtt.push(d.into_dyn());
@@ -145,45 +140,51 @@ fn main() -> anyhow::Result<()> {
 
     // check for finite-difference operator
     if depth < 5 {
-        let mut d_op = d_qtt[0].clone();
-        for qtt_k in &d_qtt[1..(depth - 1)] {
-            d_op = einsum("ijk,klmn->iljmn", &[&d_op, qtt_k]).map_str_err()?;
+        let mut d_op = d_qtt[0].clone().into_dimensionality::<Ix3>()?;
+        for k in 1..(depth - 1) {
+            let tmp = einsum("ijk,klmn->iljmn", &[&d_op, &d_qtt[k]])
+                .map_str_err()?
+                .into_dimensionality::<Ix5>()?;
             let shape = (
-                d_op.shape()[0] * d_op.shape()[1],
-                d_op.shape()[2] * d_op.shape()[3],
-                d_op.shape()[4],
+                tmp.dim().0 * tmp.dim().1,
+                tmp.dim().2 * tmp.dim().3,
+                tmp.dim().4,
             );
-            d_op = d_op.into_shape_clone(shape)?.into_dyn();
+            d_op = tmp.into_shape_clone(shape)?;
         }
-        d_op = einsum("ijk,klm->iljm", &[&d_op, &d_qtt[depth - 1]]).map_str_err()?;
-        let shape = (
-            d_op.shape()[0] * d_op.shape()[1],
-            d_op.shape()[2] * d_op.shape()[3],
-        );
-        d_op = d_op.into_shape_clone(shape)?.into_dyn();
-        println!("finite-difference operator:\n{d_op}\n");
+        let d_op = einsum("ijk,klm->iljm", &[&d_op, &d_qtt[depth - 1]])
+            .map_str_err()?
+            .into_dimensionality::<Ix4>()?;
+        let shape = (d_op.dim().0 * d_op.dim().1, d_op.dim().2 * d_op.dim().3);
+        let d_op = d_op.into_shape_clone(shape)?;
+        println!("finite-difference operator:\n{}\n", d_op);
     }
 
     // apply finite-difference operator to target function
     let mut dy_qtt: Vec<ArrayD<f64>> = Vec::with_capacity(depth);
     {
-        let t = einsum("jkl,kn->jnl", &[&d_qtt[0], &qtt[0]]).map_str_err()?;
-        let shape = (t.shape()[0], t.shape()[1] * t.shape()[2]);
-        dy_qtt.push(t.into_shape_clone(shape)?.into_dyn());
+        let t = einsum("jkl,kn->jnl", &[&d_qtt[0], &qtt[0]])
+            .map_str_err()?
+            .into_dimensionality::<Ix3>()?;
+        let shape = t.dim();
+        dy_qtt.push(t.into_shape_clone((shape.0, shape.1 * shape.2))?.into_dyn());
     }
     for k in 1..(depth - 1) {
-        let tmp = einsum("ijkl,mkn->mijnl", &[&d_qtt[k], &qtt[k]]).map_str_err()?;
-        let shape = (
-            tmp.shape()[0] * tmp.shape()[1],
-            tmp.shape()[2],
-            tmp.shape()[3] * tmp.shape()[4],
+        let tmp = einsum("ijkl,mkn->mijnl", &[&d_qtt[k], &qtt[k]])
+            .map_str_err()?
+            .into_dimensionality::<Ix5>()?;
+        let shape = tmp.dim();
+        dy_qtt.push(
+            tmp.into_shape_clone((shape.0 * shape.1, shape.2, shape.3 * shape.4))?
+                .into_dyn(),
         );
-        dy_qtt.push(tmp.into_shape_clone(shape)?.into_dyn());
     }
     {
-        let t = einsum("ijk,mk->mij", &[&d_qtt[depth - 1], &qtt[depth - 1]]).map_str_err()?;
-        let shape = (t.shape()[0] * t.shape()[1], t.shape()[2]);
-        dy_qtt.push(t.into_shape_clone(shape)?.into_dyn());
+        let t = einsum("ijk,mk->mij", &[&d_qtt[depth - 1], &qtt[depth - 1]])
+            .map_str_err()?
+            .into_dimensionality::<Ix3>()?;
+        let shape = t.dim();
+        dy_qtt.push(t.into_shape_clone((shape.0 * shape.1, shape.2))?.into_dyn());
     }
     print!("derivative QTT virtual dimensions: [");
     for t in &dy_qtt {
@@ -193,18 +194,24 @@ fn main() -> anyhow::Result<()> {
 
     // reconstruction
     let mut dyr = dy_qtt[0].clone();
-    for qtt_k in &dy_qtt[1..(depth - 1)] {
-        let tmp = einsum("ij,jkl->ikl", &[&dyr, qtt_k]).map_str_err()?;
-        let shape = (tmp.shape()[0] * tmp.shape()[1], tmp.shape()[2]);
-        dyr = tmp.into_shape_clone(shape)?.into_dyn();
+    for k in 1..(depth - 1) {
+        let tmp = einsum("ij,jkl->ikl", &[&dyr, &dy_qtt[k]])
+            .map_str_err()?
+            .into_dimensionality::<Ix3>()?;
+        let shape = tmp.dim();
+        dyr = tmp
+            .into_shape_clone((shape.0 * shape.1, shape.2))?
+            .into_dyn();
     }
-    let dyr = einsum("ij,jk->ik", &[&dyr, &dy_qtt[depth - 1]]).map_str_err()?;
+    let dyr = einsum("ij,jk->ik", &[&dyr, &dy_qtt[depth - 1]])
+        .map_str_err()?
+        .into_dimensionality::<Ix2>()?;
     let dyr = dyr.flatten();
 
     // drop boundary points as derivative is not correct there due to boundary conditions
-    let x = x.slice_move(ndarray::s![1..-2]); // keep 1..n-2 (python: 1:-2)
+    let x = x.slice(ndarray::s![1..-2]); // keep 1..n-2 (python: 1:-2)
     let dy = dy.slice(ndarray::s![1..-2]);
-    let dyr = dyr.slice_move(ndarray::s![1..-2]);
+    let dyr = dyr.slice(ndarray::s![1..-2]);
 
     if depth < 5 {
         println!("target derivative y' = {dy}\n");
