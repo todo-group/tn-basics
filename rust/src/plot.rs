@@ -79,6 +79,7 @@ pub fn plot_target_vs_qtt<DB: DrawingBackend>(
         .draw()?;
 
     // present (write file)
+    area.present()?;
     Ok(())
 }
 
@@ -136,6 +137,8 @@ pub fn plot_error<DB: DrawingBackend>(
         .background_style(&WHITE.mix(0.8))
         .border_style(&BLACK)
         .draw()?;
+
+    area.present()?;
 
     Ok(())
 }
