@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ndarray = { version = "0.16.0", features = ["blas"] }
-blas-src = { version = "0.10", features = ["openblas"] }
+ndarray = { version = "0.16", features = ["blas"] }
+blas-src = { version = "0.13", features = ["openblas"] }
 openblas-src = { version = "0.10", features = ["cblas", "system"] }
 ndarray-linalg = { version = "0.17", features = ["openblas-system"] }
 ndarray-einsum = "0.8"
 image = "0.25"
 plotters = "0.3"
-rand = "0.8"
-anyhow = "1.0.100"
+rand = "0.9"
+anyhow = "1"
 num-complex = "0.4"
 num-traits = "0.2"
 
