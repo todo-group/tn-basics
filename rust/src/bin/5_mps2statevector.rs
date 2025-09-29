@@ -39,7 +39,7 @@ fn main() -> anyhow::Result<()> {
             .map_str_err()?
             .into_dimensionality::<Ix3>()?;
         let shape = tmp.dim();
-        ghz = tmp.to_shape((shape.0 * shape.1, shape.2))?.into_owned();
+        ghz = tmp.into_shape_clone((shape.0 * shape.1, shape.2))?;
     }
     let ghz = einsum("ij,jk->ik", &[&ghz, &tr])
         .map_str_err()?

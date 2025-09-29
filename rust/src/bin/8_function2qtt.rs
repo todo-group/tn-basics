@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     }
 
     // QTT decomposition
-    let mut yt = y.clone().into_dyn();
+    let mut yt = y.clone().into_shape_with_order((1, y.len()))?;
     let mut qtt: Vec<ArrayD<f64>> = Vec::with_capacity(depth);
     let mut rank: usize = 1;
     for k in 0..(depth - 1) {
@@ -49,12 +49,12 @@ fn main() -> Result<()> {
             u.into_owned().into_dyn()
         };
         qtt.push(u);
-        yt = Array2::from_diag(&s).dot(&vt).into_dyn();
+        yt = Array2::from_diag(&s).dot(&vt);
         rank = rank_new;
     }
     println!("depth: {}", depth - 1);
-    let yt = yt.to_shape((rank, 2))?.into_owned().into_dyn();
-    qtt.push(yt);
+    let yt = yt.into_shape_clone((rank, 2))?;
+    qtt.push(yt.into_dyn());
     if depth < 5 {
         println!("qtt: [");
         for t in qtt.iter() {

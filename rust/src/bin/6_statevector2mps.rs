@@ -31,9 +31,8 @@ fn main() -> anyhow::Result<()> {
     let v_len = v.len();
     v[0] = 1.0 / 2f64.sqrt();
     v[v_len - 1] = 1.0 / 2f64.sqrt();
-    let mut v = v.into_dyn();
-
-    let mut mps: Vec<ArrayD<f64>> = Vec::new();
+    let mut v = v.into_shape_with_order((1, v_len))?;
+    let mut mps: Vec<ArrayD<f64>> = Vec::new(); // note: to use type assistance, use Array3 is reccommended, but python 6_statevector2mps.py use this formuration. here we use ArrayD for easy collation of the codes. same in 8_* and 8_*.
     let mut rank: usize = 1;
     for i in 0..(n - 1) {
         let v_view = v.to_shape((rank * 2, v.len() / (rank * 2)))?;
@@ -53,10 +52,10 @@ fn main() -> anyhow::Result<()> {
             u.into_owned().into_dyn()
         };
         mps.push(u);
-        v = Array2::from_diag(&s).dot(&vt).into_dyn();
+        v = Array2::from_diag(&s).dot(&vt);
         rank = rank_new;
     }
-    let v = v.to_shape((rank, 2))?.into_owned().into_dyn();
+    let v = v.into_shape_clone((rank, 2))?.into_dyn();
     mps.push(v);
     println!("tensors:[");
     for t in mps.iter() {
@@ -69,7 +68,8 @@ fn main() -> anyhow::Result<()> {
     println!("n={} random state:", n);
     let mut v = Array1::<f64>::from_shape_fn(1usize << n, |_| rand::random::<f64>());
     v /= v.norm();
-    let mut v = v.into_dyn();
+    let v_len = v.len();
+    let mut v = v.into_shape_with_order((1, v_len))?;
 
     let mut mps: Vec<ArrayD<f64>> = Vec::new();
     let mut rank: usize = 1;
@@ -92,10 +92,10 @@ fn main() -> anyhow::Result<()> {
             u.into_owned().into_dyn()
         };
         mps.push(u);
-        v = Array2::from_diag(&s).dot(&vt).into_dyn();
+        v = Array2::from_diag(&s).dot(&vt);
         rank = rank_new;
     }
-    let v = v.to_shape((rank, 2))?.into_owned().into_dyn();
+    let v = v.into_shape_clone((rank, 2))?.into_dyn();
     mps.push(v);
 
     println!("virtual bond dimensions:");

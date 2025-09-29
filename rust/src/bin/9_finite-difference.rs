@@ -26,7 +26,7 @@ fn main() -> Result<()> {
     // let dy = -2.0 * (&x - 0.5) * &y / (0.1f64.powi(2));
 
     // QTT decomposition of target function
-    let mut yt = y.clone().into_dyn();
+    let mut yt = y.clone().into_shape_with_order((1, y.len()))?;
     let mut qtt: Vec<ArrayD<f64>> = Vec::with_capacity(depth);
     let mut rank: usize = 1;
     for k in 0..(depth - 1) {
@@ -45,11 +45,11 @@ fn main() -> Result<()> {
             u.into_owned().into_dyn()
         };
         qtt.push(u);
-        yt = Array2::from_diag(&s).dot(&vt).into_dyn();
+        yt = Array2::from_diag(&s).dot(&vt);
         rank = rank_new;
     }
-    let yt = yt.to_shape((rank, 2))?.into_owned().into_dyn();
-    qtt.push(yt);
+    let yt = yt.into_shape_clone((rank, 2))?;
+    qtt.push(yt.into_dyn());
     print!("QTT virtual dimensions: [");
     for t in qtt.iter() {
         print!("{:?}, ", t.shape());
@@ -103,8 +103,8 @@ fn main() -> Result<()> {
     // QTT for finite-difference operator
     let mut d_qtt: Vec<ArrayD<f64>> = Vec::with_capacity(depth);
     {
-        let s = s_qtt[0].clone();
-        let st = s.view().permuted_axes(vec![1, 0, 2]).into_owned();
+        let s = s_qtt[0].clone().into_dimensionality::<Ix3>()?;
+        let st = s.view().permuted_axes([1, 0, 2]).into_owned();
         let w2 = s.shape()[2];
         let mut d = Array3::<f64>::zeros((2, 2, 2 * w2));
         d.slice_mut(ndarray::s![.., .., ..w2]).assign(&(-s));
@@ -112,8 +112,8 @@ fn main() -> Result<()> {
         d_qtt.push(d.into_dyn());
     }
     for k in 1..(depth - 1) {
-        let s = s_qtt[k].clone();
-        let st = s.view().permuted_axes(vec![0, 2, 1, 3]).into_owned();
+        let s = s_qtt[k].clone().into_dimensionality::<Ix4>()?;
+        let st = s.view().permuted_axes([0, 2, 1, 3]).into_owned();
         let w0 = s.shape()[0];
         let w3 = s.shape()[3];
         let mut d = Array4::<f64>::zeros((2 * w0, 2, 2, 2 * w3));
@@ -124,8 +124,8 @@ fn main() -> Result<()> {
         d_qtt.push(d.into_dyn());
     }
     {
-        let s = s_qtt[depth - 1].clone();
-        let st = s.view().permuted_axes(vec![0, 2, 1]).into_owned();
+        let s = s_qtt[depth - 1].clone().into_dimensionality::<Ix3>()?;
+        let st = s.view().permuted_axes([0, 2, 1]).into_owned();
         let w2 = s.shape()[2];
         let mut d = Array3::<f64>::zeros((2 * w2, 2, 2));
 
