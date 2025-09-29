@@ -1,4 +1,4 @@
-use ndarray::{Array2, Array3, ArrayD, array};
+use ndarray::{Array2, Array3, Ix2, Ix3, array};
 use ndarray_einsum::einsum;
 use tn_basics::MapStrToAnyhowErr;
 
@@ -14,7 +14,9 @@ fn main() -> anyhow::Result<()> {
     println!("left tensor:\n{}", tl);
     println!("right tensor:\n{}\n", tr);
 
-    let bell = einsum("ij,jk->ik", &[&tl, &tr]).map_str_err()?;
+    let bell = einsum("ij,jk->ik", &[&tl, &tr])
+        .map_str_err()?
+        .into_dimensionality::<Ix2>()?;
     let state_bell = bell.flatten();
     println!("statevector:\n{}\n", state_bell);
 
@@ -33,12 +35,15 @@ fn main() -> anyhow::Result<()> {
 
     let mut ghz: Array2<f64> = tl;
     for _ in 1..(n - 1) {
-        let tmp: ArrayD<f64> = einsum("ij,jkl->ikl", &[&ghz, &t]).map_str_err()?;
-        ghz = tmp
-            .to_shape((tmp.shape()[0] * tmp.shape()[1], tmp.shape()[2]))?
-            .into_owned();
+        let tmp = einsum("ij,jkl->ikl", &[&ghz, &t])
+            .map_str_err()?
+            .into_dimensionality::<Ix3>()?;
+        let shape = tmp.dim();
+        ghz = tmp.to_shape((shape.0 * shape.1, shape.2))?.into_owned();
     }
-    let ghz = einsum("ij,jk->ik", &[&ghz, &tr]).map_str_err()?;
+    let ghz = einsum("ij,jk->ik", &[&ghz, &tr])
+        .map_str_err()?
+        .into_dimensionality::<Ix2>()?;
     let state_ghz = ghz.flatten();
     println!("statevector:\n{}\n", state_ghz);
 

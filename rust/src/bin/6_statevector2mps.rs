@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2, ArrayD, arr1, s};
+use ndarray::{Array1, Array2, ArrayD, array, s};
 use ndarray_linalg::Norm;
 use tn_basics::EasySVD;
 
@@ -9,8 +9,8 @@ fn main() -> anyhow::Result<()> {
 
     // Bell state
     println!("Bell state:");
-    let v = arr1(&[1.0, 0.0, 0.0, 1.0]) / 2f64.sqrt();
-    let v = v.to_shape((2, 2))?;
+    let v = array![1.0, 0.0, 0.0, 1.0] / 2f64.sqrt();
+    let v = v.into_shape_with_order((2, 2))?;
     let (u, s, vt) = v.thin_svd()?;
     println!("singular values: {}", s);
 
@@ -18,9 +18,9 @@ fn main() -> anyhow::Result<()> {
         .iter()
         .position(|&x| x <= cutoff * s[0])
         .unwrap_or(s.len());
-    let u = u.slice_move(s![.., 0..rank_new]);
-    let s = s.slice_move(s![0..rank_new]);
-    let vt = vt.slice_move(s![0..rank_new, ..]);
+    let u = u.slice(s![.., 0..rank_new]);
+    let s = s.slice(s![0..rank_new]);
+    let vt = vt.slice(s![0..rank_new, ..]);
     let v = Array2::from_diag(&s).dot(&vt);
     println!("tensors [{}, {}])\n", u, v);
 
@@ -44,13 +44,13 @@ fn main() -> anyhow::Result<()> {
             .iter()
             .position(|&x| x <= cutoff * s[0])
             .unwrap_or(s.len());
-        let u = u.slice_move(s![.., 0..rank_new]);
-        let s = s.slice_move(s![0..rank_new]);
-        let vt = vt.slice_move(s![0..rank_new, ..]);
+        let u = u.slice(s![.., 0..rank_new]);
+        let s = s.slice(s![0..rank_new]);
+        let vt = vt.slice(s![0..rank_new, ..]);
         let u = if i > 0 {
             u.to_shape((rank, 2, rank_new))?.into_owned().into_dyn()
         } else {
-            u.into_dyn()
+            u.into_owned().into_dyn()
         };
         mps.push(u);
         v = Array2::from_diag(&s).dot(&vt).into_dyn();
@@ -82,14 +82,14 @@ fn main() -> anyhow::Result<()> {
             .iter()
             .position(|&x| x <= cutoff * s[0])
             .unwrap_or(s.len());
-        let u = u.slice_move(s![.., 0..rank_new]);
-        let s = s.slice_move(s![0..rank_new]);
-        let vt = vt.slice_move(s![0..rank_new, ..]);
+        let u = u.slice(s![.., 0..rank_new]);
+        let s = s.slice(s![0..rank_new]);
+        let vt = vt.slice(s![0..rank_new, ..]);
         let u = if i > 0 {
             // u_l: (rank*2, r_new) -> (rank, 2, r_new)
             u.to_shape((rank, 2, rank_new))?.into_owned().into_dyn()
         } else {
-            u.into_dyn()
+            u.into_owned().into_dyn()
         };
         mps.push(u);
         v = Array2::from_diag(&s).dot(&vt).into_dyn();

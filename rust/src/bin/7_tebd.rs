@@ -1,5 +1,5 @@
 use anyhow::Result;
-use ndarray::{Array1, Array2, Array3, Array4, array, s};
+use ndarray::{Array1, Array2, Array3, Array4, Ix3, Ix4, Ix5, array, s};
 use ndarray_einsum::einsum;
 use num_complex::Complex64 as C64;
 use rand::distributions::{Distribution, Uniform};
@@ -30,15 +30,14 @@ fn main() -> Result<()> {
     // state vector |0...0>
     let mut state = Array1::<C64>::zeros([1usize << n]);
     state[0] = 1.0.into();
-    //let state = state.into_shape_with_order(vec![2; n])?;
 
     // MPS |0...0> without truncation
     let mut mps0: Vec<Array3<C64>> = (0..n)
         .map(|_| array![[[1.0.into()], [0.0.into()]]])
         .collect();
     print!("mps0/1 initial virtual bond dimensions: [",);
-    for i in 0..n {
-        print!("{}, ", mps0[i].shape()[2]);
+    for i in 0..(n - 1) {
+        print!("{}, ", mps0[i].dim().2);
     }
     println!("]\n");
 
@@ -70,23 +69,25 @@ fn main() -> Result<()> {
 
             {
                 // due to ndarray_einsum limitation, we apply gate by coonverting vector into fixed shape tensor
-                let state_3d = state.to_shape((1usize << pos, 2, 1usize << (n - pos - 1)))?;
-                let state_3d = einsum("ij,kjm->kim", &[&u, &state_3d]).map_str_err()?;
+                let state_3d = state.view().into_shape_with_order((
+                    1usize << pos,
+                    2,
+                    1usize << (n - pos - 1),
+                ))?;
+                let state_3d = einsum("ij,kjm->kim", &[&u, &state_3d])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix3>()?;
                 state = state_3d.flatten().into_owned();
             }
             {
-                let sub0 = einsum("ij,kjm->kim", &[&u, &mps0[pos]]).map_str_err()?;
-                let [s0, s1, s2] = *sub0.shape() else {
-                    panic!("unexpected shape")
-                };
-                mps0[pos] = sub0.into_shape_clone((s0, s1, s2))?;
+                mps0[pos] = einsum("ij,kjm->kim", &[&u, &mps0[pos]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix3>()?;
             }
             {
-                let sub1 = einsum("ij,kjm->kim", &[&u, &mps1[pos]]).map_str_err()?;
-                let [s0, s1, s2] = *sub1.shape() else {
-                    panic!("unexpected shape")
-                };
-                mps1[pos] = sub1.into_shape_clone((s0, s1, s2))?;
+                mps1[pos] = einsum("ij,kjm->kim", &[&u, &mps1[pos]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix3>()?;
             }
         }
 
@@ -95,15 +96,19 @@ fn main() -> Result<()> {
             {
                 // due to ndarray_einsum limitation, we apply gate by coonverting vector into fixed shape tensor
                 let state_4d = state.to_shape((1usize << i, 2, 2, 1usize << (n - i - 2)))?;
-                let state_4d = einsum("ijkl,mkln->mijn", &[&cnot, &state_4d]).map_str_err()?;
+                let state_4d = einsum("ijkl,mkln->mijn", &[&cnot, &state_4d])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix4>()?;
                 state = state_4d.flatten().into_owned();
             }
             {
-                let sub0 = einsum("ijkl,mkn->mijln", &[&cnot, &mps0[i]]).map_str_err()?;
-                let sub0 = einsum("ijklm,mln->ijkn", &[&sub0, &mps0[i + 1]]).map_str_err()?;
-                let [s0, s1, s2, s3] = *sub0.shape() else {
-                    panic!("unexpected shape")
-                };
+                let sub0 = einsum("ijkl,mkn->mijln", &[&cnot, &mps0[i]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix5>()?;
+                let sub0 = einsum("ijklm,mln->ijkn", &[&sub0, &mps0[i + 1]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix4>()?;
+                let (s0, s1, s2, s3) = sub0.dim();
                 let tmat = sub0.to_shape((s0 * s1, s2 * s3))?;
                 let (u, s, vt) = tmat.thin_svd()?;
                 let rank_new = s
@@ -112,19 +117,21 @@ fn main() -> Result<()> {
                     .unwrap_or(s.len());
                 let s = s.slice(s![0..rank_new]);
                 let smat = Array2::from_diag(&s.mapv(|x| C64::from(x.sqrt())));
-                mps0[i] = (u.slice_move(s![.., 0..rank_new]))
+                mps0[i] = (u.slice(s![.., 0..rank_new]))
                     .dot(&smat)
                     .into_shape_clone((s0, s1, rank_new))?;
                 mps0[i + 1] = smat
-                    .dot(&(vt.slice_move(s![0..rank_new, ..])))
+                    .dot(&(vt.slice(s![0..rank_new, ..])))
                     .into_shape_clone((rank_new, s2, s3))?;
             }
             {
-                let sub1 = einsum("ijkl,mkn->mijln", &[&cnot, &mps1[i]]).map_str_err()?;
-                let sub1 = einsum("ijklm,mln->ijkn", &[&sub1, &mps1[i + 1]]).map_str_err()?;
-                let [s0, s1, s2, s3] = *sub1.shape() else {
-                    panic!("unexpected shape")
-                };
+                let sub1 = einsum("ijkl,mkn->mijln", &[&cnot, &mps1[i]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix5>()?;
+                let sub1 = einsum("ijklm,mln->ijkn", &[&sub1, &mps1[i + 1]])
+                    .map_str_err()?
+                    .into_dimensionality::<Ix4>()?;
+                let (s0, s1, s2, s3) = sub1.dim();
                 let tmat = sub1.to_shape((s0 * s1, s2 * s3))?;
                 let (u, s, vt) = tmat.thin_svd()?;
                 let rank_new = s
@@ -134,36 +141,40 @@ fn main() -> Result<()> {
                     .min(max_dim);
                 let s = s.slice(s![0..rank_new]);
                 let smat = Array2::from_diag(&s.mapv(|x| C64::from(x.sqrt())));
-                mps1[i] = (u.slice_move(s![.., 0..rank_new]))
+                mps1[i] = (u.slice(s![.., 0..rank_new]))
                     .dot(&smat)
                     .into_shape_clone((s0, s1, rank_new))?;
                 mps1[i + 1] = smat
-                    .dot(&(vt.slice_move(s![0..rank_new, ..])))
+                    .dot(&(vt.slice(s![0..rank_new, ..])))
                     .into_shape_clone((rank_new, s2, s3))?;
             }
         }
 
-        let (s0, s1, s2) = mps0[0].dim();
+        let shape = mps0[0].dim();
         let mut state0 = mps0[0]
             .clone()
-            .into_shape_with_order((s0 * s1, s2))?
+            .into_shape_with_order((shape.0 * shape.1, shape.2))?
             .to_owned();
         for i in 1..n {
-            let state = einsum("ij,jkl->ikl", &[&state0, &mps0[i]]).unwrap();
-            let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
-            state0 = state.into_shape_clone(shape)?;
+            let state = einsum("ij,jkl->ikl", &[&state0, &mps0[i]])
+                .map_str_err()?
+                .into_dimensionality::<Ix3>()?;
+            let shape = state.dim();
+            state0 = state.into_shape_clone((shape.0 * shape.1, shape.2))?;
         }
         let state0 = state0.flatten();
 
-        let (s0, s1, s2) = mps1[0].dim();
+        let shape = mps1[0].dim();
         let mut state1 = mps1[0]
             .clone()
-            .into_shape_with_order((s0 * s1, s2))?
+            .into_shape_with_order((shape.0 * shape.1, shape.2))?
             .to_owned();
         for i in 1..n {
-            let state = einsum("ij,jkl->ikl", &[&state1, &mps1[i]]).unwrap();
-            let shape = (state.shape()[0] * state.shape()[1], state.shape()[2]);
-            state1 = state.into_shape_clone(shape)?;
+            let state = einsum("ij,jkl->ikl", &[&state1, &mps1[i]])
+                .map_str_err()?
+                .into_dimensionality::<Ix3>()?;
+            let shape = state.dim();
+            state1 = state.into_shape_clone((shape.0 * shape.1, shape.2))?;
         }
         let state1 = state1.flatten();
 

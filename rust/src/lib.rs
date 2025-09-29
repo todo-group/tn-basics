@@ -35,7 +35,6 @@ where
 
     fn thin_svd(&self) -> Result<(Self::U, Self::Sigma, Self::VT), LinalgError> {
         let (u, s, vt) = self.full_svd()?;
-
         let u_thin = u.slice_move(s![.., ..s.len()]);
         let vt_thin = vt.slice_move(s![..s.len(), ..]);
 
