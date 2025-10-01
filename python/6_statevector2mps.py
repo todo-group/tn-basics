@@ -73,10 +73,9 @@ def main():
         rank = rank_new
     v = v.reshape((rank, 2))
     mps.append(v)
-
     print("virtual bond dimensions:")
     for i in range(1, n):
-        print(f"{i}:: {mps[i].shape[0]}")
+        print(f"{i - 1}: {mps[i].shape[0]}")
 
 
 if __name__ == "__main__":

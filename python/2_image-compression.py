@@ -35,9 +35,10 @@ def main():
     """image reconstruction with different ranks"""
     ranks = [1, 2, 4, 8, 16, 32, 64, 128, 256]
     for r in ranks:
-        Ur = U[:, :r]
-        Sr = np.diag(S[:r])
-        Vtr = Vt[:r, :]
+        rr = min(r, len(S))
+        Ur = U[:, :rr]
+        Sr = np.diag(S[:rr])
+        Vtr = Vt[:rr, :]
         Ar = Ur @ Sr @ Vtr
         plt.figure()
         plt.imshow(Ar, cmap="gray", vmin=0, vmax=255)

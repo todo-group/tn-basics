@@ -23,16 +23,16 @@ def main():
     print(f"reconstructed A =\n{A_reconstructed}\n")
 
     """full SVD"""
-    U, S, Vt = np.linalg.svd(A, full_matrices=True)
-    print(f"U (full) =\n{U}\n")
-    print(f"S (full) =\n{S}\n")
-    print(f"Vt (full) =\n{Vt}\n")
+    Ufull, Sfull, Vtfull = np.linalg.svd(A, full_matrices=True)
+    print(f"U (full) =\n{Ufull}\n")
+    print(f"S (full) =\n{Sfull}\n")
+    print(f"Vt (full) =\n{Vtfull}\n")
 
     """reconstruct A (full SVD)"""
-    S_matrix = np.zeros((4, 3))
-    np.fill_diagonal(S_matrix, S)
-    A_reconstructed = U @ S_matrix @ Vt
-    print(f"reconstructed A =\n{A_reconstructed}\n")
+    S_matrix_full = np.zeros((4, 3))
+    np.fill_diagonal(S_matrix, Sfull)
+    A_reconstructed_full = Ufull @ S_matrix_full @ Vtfull
+    print(f"reconstructed A =\n{A_reconstructed_full}\n")
 
     """rank-2 approximation"""
     r = 2
@@ -42,7 +42,7 @@ def main():
     A_rank2 = Ur @ Sr @ Vtr
 
     print(f"rank-2 approximation of A =\n{A_rank2}\n")
-    print(f"Frobenius norm of the error = {np.linalg.norm(A - A_rank2, 'fro')}\n")
+    print(f"Frobenius norm of the error = {np.linalg.norm(A - A_rank2, 'fro')}")
 
 
 if __name__ == "__main__":

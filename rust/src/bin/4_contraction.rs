@@ -28,6 +28,6 @@ fn main() -> anyhow::Result<()> {
     let d = einsum("ijlm,ln,mnk->ijk", &[&a, &b, &c])
         .map_str_err()?
         .into_dimensionality::<Ix3>()?;
-    println!("D: shape {:?}\n{}\n", d.dim(), d);
+    println!("D: shape {:?}\n{}", d.dim(), d);
     Ok(())
 }

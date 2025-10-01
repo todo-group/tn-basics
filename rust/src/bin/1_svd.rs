@@ -28,7 +28,6 @@ fn main() -> anyhow::Result<()> {
     // reconstruct A (full SVD)
     let mut s_matrix = Array2::<f64>::zeros((u_full.ncols(), vt_full.nrows()));
     s_matrix.diag_mut().assign(&s_full);
-    let s_matrix = s_matrix;
     let a_reconstructed_full = u_full.dot(&s_matrix).dot(&vt_full);
     println!("reconstructed A =\n{a_reconstructed_full}\n");
 

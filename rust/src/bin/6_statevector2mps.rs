@@ -10,10 +10,10 @@ fn main() -> anyhow::Result<()> {
     // Bell state
     println!("Bell state:");
     let v = array![1.0, 0.0, 0.0, 1.0] / 2f64.sqrt();
+
     let v = v.into_shape_with_order((2, 2))?;
     let (u, s, vt) = v.thin_svd()?;
     println!("singular values: {s}");
-
     let rank_new = s
         .iter()
         .position(|&x| x <= cutoff * s[0])
@@ -32,13 +32,12 @@ fn main() -> anyhow::Result<()> {
     v[0] = 1.0 / 2f64.sqrt();
     v[v_len - 1] = 1.0 / 2f64.sqrt();
     let mut v = v.into_shape_with_order((1, v_len))?;
-    let mut mps: Vec<ArrayD<f64>> = Vec::new(); // note: to use type assistance, use Array3 is reccommended, but python 6_statevector2mps.py use this formuration. here we use ArrayD for easy collation of the codes. same in 8_* and 8_*.
+    let mut mps: Vec<ArrayD<f64>> = Vec::new();
     let mut rank: usize = 1;
     for i in 0..(n - 1) {
         let v_view = v.to_shape((rank * 2, v.len() / (rank * 2)))?;
         let (u, s, vt) = v_view.thin_svd()?;
         println!("{i}: singular values: {s}");
-
         let rank_new = s
             .iter()
             .position(|&x| x <= cutoff * s[0])
@@ -77,7 +76,6 @@ fn main() -> anyhow::Result<()> {
         let v_view = v.to_shape((rank * 2, v.len() / (rank * 2)))?;
         let (u, s, vt) = v_view.thin_svd()?;
         println!("{i}: singular values: {s}");
-
         let rank_new = s
             .iter()
             .position(|&x| x <= cutoff * s[0])
@@ -97,10 +95,9 @@ fn main() -> anyhow::Result<()> {
     }
     let v = v.into_shape_clone((rank, 2))?.into_dyn();
     mps.push(v);
-
     println!("virtual bond dimensions:");
     for (i, ti) in mps[1..n].iter().enumerate() {
-        println!("{i}:: {}", ti.shape()[0]);
+        println!("{i}: {}", ti.shape()[0]);
     }
 
     Ok(())

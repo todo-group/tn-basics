@@ -16,8 +16,8 @@ fn main() -> anyhow::Result<()> {
     let bell = einsum("ij,jk->ik", &[&tl, &tr])
         .map_str_err()?
         .into_dimensionality::<Ix2>()?;
-    let state_bell = bell.flatten();
-    println!("statevector:\n{state_bell}\n");
+    let bell = bell.flatten();
+    println!("statevector:\n{bell}\n");
 
     // GHZ state
     let n: usize = 6;
@@ -43,8 +43,8 @@ fn main() -> anyhow::Result<()> {
     let ghz = einsum("ij,jk->ik", &[&ghz, &tr])
         .map_str_err()?
         .into_dimensionality::<Ix2>()?;
-    let state_ghz = ghz.flatten();
-    println!("statevector:\n{state_ghz}\n");
+    let ghz = ghz.flatten();
+    println!("statevector:\n{ghz}");
 
     Ok(())
 }

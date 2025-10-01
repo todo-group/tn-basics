@@ -1,6 +1,6 @@
 #!/usr/bin/env julia
 """
-Tensor definition examples (Julia)
+Tensor definition examples
 """
 
 using Random
@@ -22,11 +22,12 @@ function main()
 
     println("3D array (3-leg tensor)")
     A = reshape([1, 2, 3, 4, 5, 6, 7, 8], 2, 2, 2)
+    A = permutedims(A, (3, 2, 1))
     println("A =\n", A, "\n")
     println("A.shape = ", size(A))
     println("A[1,1,1] = ", A[1, 1, 1])
-    println("A[2,2,2] = ", A[2, 2, 2])
-    println("A[:,1,2] = ", A[:, 1, 2], "\n")
+    println("A[2,2,1] = ", A[2, 2, 1])
+    println("A[:,1,2] = ", A[:, 1, 2])
 end
 
 main()

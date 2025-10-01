@@ -4,8 +4,6 @@ use rand::random;
 // Tensor definition examples
 
 fn main() {
-    // tensor definition
-
     println!("vector (1-leg tensor)");
     let t1: Array1<i32> = array![1, 2, 3];
     println!("t1 = {}", t1);
@@ -25,6 +23,6 @@ fn main() {
     println!("A =\n{}\n", a);
     println!("A.shape = {:?}", a.dim());
     println!("A[0,0,0] = {}", a[(0, 0, 0)]);
-    println!("A[1,1,1] = {}", a[(1, 1, 1)]);
+    println!("A[1,1,0] = {}", a[(1, 1, 0)]);
     println!("A[:,0,1] = {}", a.slice(s![.., 0, 1]));
 }

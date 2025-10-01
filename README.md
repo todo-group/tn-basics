@@ -51,6 +51,6 @@
 * Rust
     - 以下、`rust` ディレクトリ内での実行を想定
     - コンパイル
-        - `cargo build`
+        - `cargo build --release`
     - 実行例
-        - `cargo run --bin 1_svd`
+        - `cargo run --release --bin 1_svd`

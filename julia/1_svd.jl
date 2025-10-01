@@ -46,10 +46,9 @@ function main()
     Sr = Diagonal(Sfull[1:r])
     Vr = Vfull[:, 1:r]
     A_rank2 = Ur * Sr * transpose(Vr)
-    println("Rank-2 approximation of A =\n", A_rank2, "\n")
 
-    err = norm(A .- A_rank2)
-    @printf "Frobenius norm of the error = %.10f\n" err
+    println("Rank-2 approximation of A =\n", A_rank2, "\n")
+    @printf "Frobenius norm of the error = %.10f\n" norm(A .- A_rank2)
 end
 
 main()

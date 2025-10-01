@@ -33,12 +33,12 @@ def main():
     print(f"middle tensors:\n{t}\n")
 
     ghz = tl
-    for k in range(1, n - 1):
+    for _ in range(1, n - 1):
         ghz = np.einsum("ij,jkl->ikl", ghz, t)
         ghz = ghz.reshape(ghz.shape[0] * ghz.shape[1], ghz.shape[2])
     ghz = np.einsum("ij,jk->ik", ghz, tr)
     ghz = ghz.reshape(-1)
-    print(f"statevector:\n{ghz}\n")
+    print(f"statevector:\n{ghz}")
 
 
 if __name__ == "__main__":

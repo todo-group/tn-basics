@@ -8,7 +8,6 @@ import numpy as np
 
 
 def main():
-    """tensor definition"""
     print("vector (1-leg tensor)")
     t1 = np.array([1, 2, 3])
     print(f"t1 = {t1}")
@@ -28,8 +27,8 @@ def main():
     print(f"A =\n{A}\n")
     print(f"A.shape = {A.shape}")
     print(f"A[0,0,0] = {A[0, 0, 0]}")
-    print(f"A[1,1,1] = {A[1, 1, 1]}")
-    print(f"A[:,0,1] = {A[:, 0, 1]}\n")
+    print(f"A[1,1,0] = {A[1, 1, 0]}")
+    print(f"A[:,0,1] = {A[:, 0, 1]}")
 
 
 if __name__ == "__main__":

@@ -13,6 +13,8 @@ use plotters::{
 };
 use tn_basics::EasySVD;
 
+// Compress and reconstruct grayscale images using SVD
+
 fn to_gray_ndarray<E>(img: &GrayImage, mut map_u8: impl FnMut(u8) -> E) -> Array2<E> {
     let (w, h) = img.dimensions();
     let arr_1d: Array1<_> = img
@@ -63,7 +65,7 @@ fn plot_singular_values<S: Data<Elem = f64>, DB: DrawingBackend>(
 // Compress and reconstruct grayscale images using SVD
 #[expect(clippy::many_single_char_names)]
 fn main() -> anyhow::Result<()> {
-    let path = "../data/sqai-square-gray-rgb150ppi.jpg";
+    let path = "../data/sqai-square-gray-rgb150ppi.jpg"; // path to input image
 
     // load image and convert to grayscale
     let image = ImageReader::open(path)?.decode()?.into_luma8();
@@ -84,10 +86,10 @@ fn main() -> anyhow::Result<()> {
     // image reconstruction with different ranks
     let ranks: [usize; _] = [1, 2, 4, 8, 16, 32, 64, 128, 256];
     for &r in &ranks {
-        let r = r.min(s.len());
-        let ur = u.slice(s![.., 0..r]);
-        let sr = Array2::from_diag(&s.slice(s![0..r]));
-        let vtr = vt.slice(s![0..r, ..]);
+        let rr = r.min(s.len());
+        let ur = u.slice(s![.., 0..rr]);
+        let sr = Array2::from_diag(&s.slice(s![0..rr]));
+        let vtr = vt.slice(s![0..rr, ..]);
         let ar = ur.dot(&sr).dot(&vtr);
         let out = format!("reconstructed_rank_{r}.png");
         to_gray_image(&ar, |v| v.round().clamp(0.0, 255.0).to_u8().unwrap()).save(&out)?;

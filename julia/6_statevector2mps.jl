@@ -1,20 +1,9 @@
 #!/usr/bin/env julia
 """
-Generate MPS from statevector (Julia)
+Generate MPS from statevector
 """
 
 using LinearAlgebra
-
-function truncate_svd(U::AbstractMatrix, S::AbstractVector, V::AbstractMatrix; cutoff=1e-10)
-    # A ≈ U[:,1:r] * Diagonal(S[1:r]) * V[:,1:r]' だが、
-    # Python 版と揃えるため v = diag(S) * V' の「左正準」っぽい形に
-    r = sum(S .> cutoff * S[1])
-    U2 = @view U[:, 1:r]
-    S2 = @view S[1:r]
-    Vt2 = @view(V[:, 1:r])'           # V' が Vt
-    v = Diagonal(S2) * Vt2         # Python: np.dot(np.diag(S), Vt)
-    return U2, v, r
-end
 
 function main()
     cutoff = 1e-10
@@ -22,38 +11,74 @@ function main()
     # Bell state
     println("Bell state:")
     v = [1.0, 0.0, 0.0, 1.0] ./ sqrt(2)
-    X = reshape(v, 2, 2)             # (2,2)
-    F = svd(X; full=false)           # X = U * Diagonal(S) * V'
+
+    v = permutedims(reshape(v, 2, 2))
+    F = svd(v; full=false)
     println("singular values: ", F.S)
-    U, vR, r = truncate_svd(F.U, F.S, F.Vt'; cutoff)
-    println("tensors ", Any[U, vR], ")\n")
+    rank_new = sum(F.S .> cutoff * F.S[1])
+    U = @view F.U[:, 1:rank_new]
+    S = Diagonal(F.S[1:rank_new])
+    Vt = @view(F.V[:, 1:rank_new])'
+    v = S * Vt
+    println("tensors ", Any[U, v], ")\n")
 
     # GHZ state
-    n = 6
+    n = 16
     println("n=$n GHZ state:")
     v = zeros(Float64, 2^n)
-    v[1] = 1 / sqrt(2)           # Julia 1-based
+    v[1] = 1 / sqrt(2)
     v[end] = 1 / sqrt(2)
 
     mps = Array{Float64}[]
     rank = 1
-    V = copy(v)
-
     for i in 0:(n-2)
-        V = reshape(V, rank * 2, :)    # (rank*2, -1)
-        F = svd(V; full=false)
+        v = reshape(v, rank * 2, :)
+        F = svd(v; full=false)
         println("$(i): singular values: ", F.S)
-        U2::Array{Float64}, vR, rank_new = truncate_svd(F.U, F.S, F.Vt'; cutoff)
+        rank_new = sum(F.S .> cutoff * F.S[1])
+        U = @view F.U[:, 1:rank_new]
+        S = Diagonal(F.S[1:rank_new])
+        Vt = @view(F.V[:, 1:rank_new])'
         if i > 0
-            U2 = reshape(U2, rank, 2, rank_new)
+            U = reshape(U, rank, 2, rank_new)
         end
-        push!(mps, U2)
-        V = vR
+        push!(mps, U)
+        v = S * Vt
         rank = rank_new
     end
-    V = reshape(V, rank, 2)
-    push!(mps, V)
+    v = reshape(v, rank, 2)
+    push!(mps, v)
     println("tensors: ", mps, "\n")
+
+    # random state
+    n = 16
+    println("n=$n random state:")
+    v = rand(2^n)
+    v = v / norm(v)
+
+    mps = Array{Float64}[]
+    rank = 1
+    for i in 0:(n-2)
+        v = reshape(v, rank * 2, :)
+        F = svd(v; full=false)
+        println("$(i): singular values: ", F.S)
+        rank_new = sum(F.S .> cutoff * F.S[1])
+        U = @view F.U[:, 1:rank_new]
+        S = Diagonal(F.S[1:rank_new])
+        Vt = @view(F.V[:, 1:rank_new])'
+        if i > 0
+            U = reshape(U, rank, 2, rank_new)
+        end
+        push!(mps, U)
+        v = S * Vt
+        rank = rank_new
+    end
+    v = reshape(v, rank, 2)
+    push!(mps, v)
+    println("virtual bond dimensions:")
+    for i in 2:n
+        print("$(i-1): $(size(mps[i])[1])\n")
+    end
 end
 
 main()

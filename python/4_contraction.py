@@ -26,7 +26,7 @@ def main():
     print(f"C: shape {C.shape}\n{C}\n")
     print("contract: A, B, C -> D")
     D = np.einsum("ijlm,ln,mnk->ijk", A, B, C)
-    print(f"D: shape {D.shape}\n{D}\n")
+    print(f"D: shape {D.shape}\n{D}")
 
 
 if __name__ == "__main__":
