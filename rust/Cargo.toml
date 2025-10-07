@@ -5,10 +5,20 @@ edition = "2024"
 
 [dependencies]
 ndarray = { version = "0.16", features = ["blas"] }
+ndarray-linalg = { version = "0.17" }
+ndarray-einsum = "0.8"
+
+# math lib backend
+
+# openblas (if not work, add feature "openblas-system" to ndarray_linalg)
 blas-src = { version = "0.13", features = ["openblas"] }
 openblas-src = { version = "0.10", features = ["cblas", "system"] }
-ndarray-linalg = { version = "0.17", features = ["openblas-system"] }
-ndarray-einsum = "0.8"
+
+# accelerate
+# blas-src = { version = "0.13", features = ["accelerate"] }
+
+# intel-mkl? (not yet)
+
 image = "0.25"
 plotters = "0.3"
 rand = "0.9"
