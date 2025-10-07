@@ -1,5 +1,8 @@
 pub mod plot;
 
+#[cfg(feature = "gtk4")]
+pub mod gtk_plot;
+
 use ndarray::{Array1, Array2, ArrayBase, Data, Ix2};
 use ndarray_linalg::{JobSvd, Lapack, SVDDC, Scalar, error::LinalgError};
 extern crate blas_src as _;
