@@ -12,6 +12,7 @@ use plotters::{
     style::{BLUE, WHITE},
 };
 use tn_basics::EasySVD;
+extern crate blas_src as _;
 
 // Compress and reconstruct grayscale images using SVD
 

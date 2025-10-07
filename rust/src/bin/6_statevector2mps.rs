@@ -1,6 +1,7 @@
 use ndarray::{Array1, Array2, ArrayD, array, s};
 use ndarray_linalg::Norm;
 use tn_basics::EasySVD;
+extern crate blas_src as _;
 
 // Generate MPS from statevector
 

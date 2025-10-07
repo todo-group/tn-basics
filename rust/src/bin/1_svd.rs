@@ -1,6 +1,7 @@
 use ndarray::{Array2, array, s};
 use ndarray_linalg::OperationNorm;
 use tn_basics::EasySVD;
+extern crate blas_src as _;
 
 // SVD and low-rank approximation of a matrix
 

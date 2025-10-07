@@ -1,5 +1,6 @@
 use ndarray::{Array1, Array2, Array3, array, s};
 use rand::random;
+extern crate blas_src as _;
 
 // Tensor definition examples
 

@@ -1,6 +1,7 @@
 use ndarray::{Array2, Array3, Ix2, Ix3, array};
 use ndarray_einsum::einsum;
 use tn_basics::MapStrToAnyhowErr;
+extern crate blas_src as _;
 
 // Generate statevector from MPS
 

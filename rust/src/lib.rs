@@ -2,6 +2,7 @@ pub mod plot;
 
 use ndarray::{Array1, Array2, ArrayBase, Data, Ix2, s};
 use ndarray_linalg::{Lapack, SVD, Scalar, error::LinalgError};
+extern crate blas_src as _;
 
 // unfortunaletely, ndarray-linalg does not provide thin_svd function, though internally it appears to have options for thin svd.
 // also, svd function in ndarray-linalg require flags to calc U,Vt, while we usually use both.

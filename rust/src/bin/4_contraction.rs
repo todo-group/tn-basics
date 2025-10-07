@@ -2,6 +2,7 @@ use ndarray::{Array, Ix2, Ix3};
 use ndarray_einsum::einsum;
 use rand::random;
 use tn_basics::MapStrToAnyhowErr;
+extern crate blas_src as _;
 
 // Tensor contraction examples
 

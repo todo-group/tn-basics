@@ -5,6 +5,7 @@ use num_complex::Complex64 as C64;
 use rand::Rng;
 use std::f64::consts::PI;
 use tn_basics::{EasySVD, MapStrToAnyhowErr};
+extern crate blas_src as _;
 
 fn iexp(theta: f64) -> C64 {
     C64::new(theta.cos(), theta.sin())

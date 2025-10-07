@@ -7,6 +7,7 @@ use tn_basics::{
     EasySVD, MapStrToAnyhowErr,
     plot::{plot_error, plot_target_vs_qtt},
 };
+extern crate blas_src as _;
 
 // QTT representation of finite-difference operator
 
