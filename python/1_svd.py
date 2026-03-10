@@ -30,7 +30,7 @@ def main():
 
     """reconstruct A (full SVD)"""
     S_matrix_full = np.zeros((4, 3))
-    np.fill_diagonal(S_matrix, Sfull)
+    np.fill_diagonal(S_matrix_full, Sfull)
     A_reconstructed_full = Ufull @ S_matrix_full @ Vtfull
     print(f"reconstructed A =\n{A_reconstructed_full}\n")
 
